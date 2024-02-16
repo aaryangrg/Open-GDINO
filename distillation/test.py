@@ -11,15 +11,15 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, DistributedSampler
 
-from util.get_param_dicts import get_param_dict
-from util.logger import setup_logger
-from util.slconfig import DictAction, SLConfig
-from util.utils import  BestMetricHolder
-import util.misc as utils
+from ..util.get_param_dicts import get_param_dict
+from ..util.logger import setup_logger
+from ..util.slconfig import DictAction, SLConfig
+from ..util.utils import  BestMetricHolder
+from ..util import misc as utils
 
 import datasets
-from datasets import build_dataset, get_coco_api_from_dataset
-from engine import evaluate, train_one_epoch
+from ..datasets import build_dataset, get_coco_api_from_dataset
+from ..engine import evaluate, train_one_epoch
 
 from groundingdino.util.utils import clean_state_dict
 
