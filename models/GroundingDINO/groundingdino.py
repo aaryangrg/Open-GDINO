@@ -801,8 +801,7 @@ def build_groundingdino(args):
                              focal_alpha=args.focal_alpha, focal_gamma=args.focal_gamma,losses=losses
                              )
     criterion.to(device)
-    # postprocessors = {'bbox': PostProcess(num_select=args.num_select  , text_encoder_type=args.text_encoder_type,nms_iou_threshold=args.nms_iou_threshold,args=args)}
-    postprocessors = None
+    postprocessors = {'bbox': PostProcess(num_select=args.num_select  , text_encoder_type=args.text_encoder_type,nms_iou_threshold=args.nms_iou_threshold,args=args)}
 
     return model, criterion, postprocessors
 
