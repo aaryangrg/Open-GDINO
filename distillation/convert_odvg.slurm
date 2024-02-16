@@ -2,7 +2,7 @@
 #SBATCH --account=group3
 #SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/odvg.out
 #SBATCH --partition=normal
-#SBATCH --gres=cpu:1     # And two GPU
+#SBATCH --cpus-per-task=1
 #SBATCH --job-name=GDinoTest
 
 source /home/aaryang/anaconda3/bin/activate
