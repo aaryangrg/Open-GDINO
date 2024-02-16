@@ -117,7 +117,7 @@ def main(args):
         args.debug = False
 
     # setup logger
-    os.makedirs(args.output_dir, exist_ok=True)
+    # os.makedirs(args.output_dir, exist_ok=True)
     # logger = setup_logger(output=os.path.join(args.output_dir, 'info.txt'), distributed_rank=args.rank, color=False, name="detr")
     # logger.info("git:\n  {}\n".format(utils.get_sha()))
     # logger.info("Command: "+' '.join(sys.argv))
