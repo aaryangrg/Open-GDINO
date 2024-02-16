@@ -2,7 +2,7 @@
 #SBATCH --account=group3
 #SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/eval/pretrained.out
 #SBATCH --partition=gpu
-#SBATCH --gres=gpu:2      # And two GPU
+#SBATCH --gres=gpu:1    # And two GPU
 #SBATCH --cpus-per-task=8           # Two cores per task
 #SBATCH --job-name=GDinoTest
 #SBATCH --constraint=gmem12

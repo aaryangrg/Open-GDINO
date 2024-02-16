@@ -84,7 +84,7 @@ def build_model_main(args):
 def main(args):
     
 
-    utils.setup_distributed(args)
+    # utils.setup_distributed(args)
     # load cfg file and update the args
     print("Loading config file from {}".format(args.config_file))
     time.sleep(args.rank * 0.02)
