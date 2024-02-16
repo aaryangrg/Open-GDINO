@@ -34,7 +34,7 @@ def get_args_parser():
         'in xxx=yyy format will be merged into config file.')
 
     # dataset parameters
-    parser.add_argument("--datasets", type=str, required=True, help='path to datasets json')
+    # parser.add_argument("--datasets", type=str, required=True, help='path to datasets json')
     parser.add_argument('--remove_difficult', action='store_true')
     parser.add_argument('--fix_size', action='store_true')
 
