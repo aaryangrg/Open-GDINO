@@ -265,6 +265,10 @@ def main(args):
     
     print("Printing , pretrained backbone")
     print(model_without_ddp.backbone)
+    random_tensor = torch.randn(1, 3, 224, 224).to(device)
+    out = model_without_ddp.backbone(random_tensor)
+    print(out.shape)
+
         # logger.info(str(_load_output))
 
  
