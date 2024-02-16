@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=group3
-#SBATCH --output=/home/aaryang/experiments/OPEN-GDINO/outs/test.out
+#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/test.out
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1      # And two GPU
 #SBATCH --cpus-per-task=10            # Two cores per task
