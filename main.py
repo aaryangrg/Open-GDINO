@@ -214,6 +214,7 @@ def main(args):
 
     base_ds = get_coco_api_from_dataset(dataset_val)
 
+    # Initial pre-trained weight load
     if args.frozen_weights is not None:
         checkpoint = torch.load(args.frozen_weights, map_location='cpu')
         model_without_ddp.detr.load_state_dict(clean_state_dict(checkpoint['model']),strict=False)
