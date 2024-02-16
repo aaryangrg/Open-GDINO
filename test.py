@@ -265,7 +265,7 @@ def main(args):
     
     print("Printing , pretrained backbone")
     print(model_without_ddp.backbone)
-    random_tensor = torch.randn(1, 3, 224, 224).to(device)
+    random_tensor = utils.NestedTensor(torch.randn(1, 3, 224, 224), mask = None).to(device)
     out = model_without_ddp.backbone(random_tensor)
     print(out.shape)
 
