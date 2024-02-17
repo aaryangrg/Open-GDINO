@@ -70,7 +70,7 @@ def get_args_parser():
     parser.add_argument('--amp', action='store_true',
                         help="Train with mixed precision")
     
-    parser.add_argument('--distributed' type = bool, default = False)
+    parser.add_argument('--distributed', type = bool, default = False)
     return parser
 
 def build_model_main(args):
