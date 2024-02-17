@@ -69,6 +69,8 @@ def get_args_parser():
     parser.add_argument("--local-rank", type=int, help='local rank for DistributedDataParallel')
     parser.add_argument('--amp', action='store_true',
                         help="Train with mixed precision")
+    
+    parser.add_argument('--distributed' type = bool, default = False)
     return parser
 
 def build_model_main(args):
