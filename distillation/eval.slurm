@@ -14,6 +14,8 @@ echo CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES
 
 nvidia-smi
 
+which nvcc
+
 cuda_path=$(which nvcc | xargs dirname | xargs dirname)
 export CUDA_HOME=$cuda_path
 
