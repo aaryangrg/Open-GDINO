@@ -2,9 +2,9 @@
   "train": [
     {
       "root": "/home/c3-0/datasets/COCO/train2017",
-      "anno": "/home/c3-0/datasets/COCO/annotations/instances_train2017.json",
+      "anno": "../config/coco2017_train_odvg.jsonl",
       "label_map": "../config/coco2017_label_map.json",
-      "dataset_mode": "coco"
+      "dataset_mode": "odvg"
     }
   ],
   "val": [
