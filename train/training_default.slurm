@@ -14,7 +14,7 @@ echo CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES
 
 nvidia-smi
 
-python -m torch.distributed.launch  --nproc_per_node 2 main.py \
+python -m torch.distributed.launch  --nproc_per_node 2 ../main.py \
         --output_dir ../results/train/finetuning/ \
         -c ../config/cfg_coco.p\
         --datasets ../config/coco_od_datasets.json \
