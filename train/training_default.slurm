@@ -16,7 +16,7 @@ nvidia-smi
 
 python -m torch.distributed.launch  --nproc_per_node 2 ../main.py \
         --output_dir ../results/train/finetuning/ \
-        -c ../config/cfg_coco.p\
+        -c ../config/cfg_coco.py \
         --datasets ../config/coco_od_datasets.json \
         --pretrain_model_path ../weights/groundingdino_swint_ogc.pth \
 
