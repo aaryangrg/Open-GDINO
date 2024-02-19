@@ -286,7 +286,7 @@ def main(args):
     #     if args.distributed:
     #         sampler_train.set_epoch(epoch)
 
-    #     train_stats = train_one_epoch(
+        # train_stats = train_one_epoch(
     #         model, criterion, data_loader_train, optimizer, device, epoch,
     #         args.clip_max_norm, wo_class_error=wo_class_error, lr_scheduler=lr_scheduler, args=args, logger=(logger if args.save_log else None))
     #     if args.output_dir:

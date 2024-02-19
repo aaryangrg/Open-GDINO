@@ -8,17 +8,11 @@
 #SBATCH --constraint=gmem12
 
 source /home/aaryang/anaconda3/bin/activate
-conda activate gdino
+conda activate opdino
 
 echo CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES
 
 nvidia-smi
-
-which nvcc
-
-cuda_path=$(which nvcc | xargs dirname | xargs dirname)
-export CUDA_HOME=$cuda_path
-
 
 python3 ../test.py \
     --config_file ../config/cfg_coco.py \

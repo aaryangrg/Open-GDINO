@@ -10,6 +10,7 @@ from typing import Iterable
 
 from util.utils import to_device
 import torch
+import torch.nn.functional as F
 
 import util.misc as utils
 from datasets.coco_eval import CocoEvaluator
@@ -17,13 +18,17 @@ from datasets.cocogrounding_eval import CocoGroundingEvaluator
 
 from datasets.panoptic_eval import PanopticEvaluator
 
+def get_kld_loss(scale_pred, scale_soft, temperature = 1.0):
+        p_s = F.log_softmax(scale_pred / temperature, dim=1)
+        p_t = F.softmax(scale_soft / temperature, dim=1)
+        loss = F.kl_div(p_s, p_t, reduction='mean')
+        return loss
 
 def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
                     device: torch.device, epoch: int, max_norm: float = 0, 
                     wo_class_error=False, lr_scheduler=None, args=None, logger=None):
     scaler = torch.cuda.amp.GradScaler(enabled=args.amp)
-
 
     model.train()
     criterion.train()
@@ -111,6 +116,76 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         resstat.update({f'weight_{k}': v for k,v in criterion.weight_dict.items()})
     return resstat
 
+def train_one_epoch_distillation(dino_model: torch.nn.Module, criterion: torch.nn.Module,
+                    data_loader: Iterable, optimizer: torch.optim.Optimizer,
+                    device: torch.device, epoch: int, max_norm: float = 0, 
+                    wo_class_error=False, lr_scheduler=None, args=None, logger=None, student_model : torch.nn.Module = None):
+    scaler = torch.cuda.amp.GradScaler(enabled=args.amp)
+
+    dino_model.eval()
+    student_model.train()
+    metric_logger = utils.MetricLogger(delimiter="  ")
+    metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
+    if not wo_class_error:
+        metric_logger.add_meter('class_error', utils.SmoothedValue(window_size=1, fmt='{value:.2f}'))
+    header = 'Epoch: [{}]'.format(epoch)
+    print_freq = 10
+
+    _cnt = 0
+
+    for samples, targets in metric_logger.log_every(data_loader, print_freq, header, logger=logger):
+
+        samples = samples.to(device)
+        captions = [t["caption"] for t in targets]
+        cap_list = [t["cap_list"] for t in targets]
+        targets = [{k: v.to(device) for k, v in t.items() if torch.is_tensor(v)} for t in targets]
+        with torch.cuda.amp.autocast(enabled=args.amp):
+            # Dino - parent --> backbone logits
+            dino_outputs = dino_model.backbone(samples)
+            student_outputs = student_model(samples)
+
+            # Loss --> KLD only
+            kld_loss = get_kld_loss(student_outputs, dino_outputs)
+
+        loss_value = kld_loss
+
+        if not math.isfinite(loss_value):
+            print("Loss is {}, stopping training".format(loss_value))
+            sys.exit(1)
+
+        # amp backward function
+        if args.amp:
+            optimizer.zero_grad()
+            scaler.scale(loss_value).backward()
+            if max_norm > 0:
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(dino_model.parameters(), max_norm)
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            # original backward function
+            optimizer.zero_grad()
+            loss_value.backward()
+            if max_norm > 0:
+                torch.nn.utils.clip_grad_norm_(dino_model.parameters(), max_norm)
+            optimizer.step()
+
+        if args.onecyclelr:
+            lr_scheduler.step()
+
+
+        metric_logger.update(loss=loss_value)
+        metric_logger.update(lr=optimizer.param_groups[0]["lr"])
+
+        _cnt += 1
+        if args.debug:
+            if _cnt % 15 == 0:
+                print("BREAK!"*5)
+                break
+
+    # gather the stats from all processes
+    metric_logger.synchronize_between_processes()
+    return None
 
 @torch.no_grad()
 def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, output_dir, wo_class_error=False, args=None, logger=None):
