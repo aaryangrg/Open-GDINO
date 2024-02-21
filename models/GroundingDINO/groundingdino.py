@@ -290,6 +290,7 @@ class GroundingDINO(nn.Module):
         if isinstance(samples, (list, torch.Tensor)):
             samples = nested_tensor_from_tensor_list(samples)
         features, poss = self.backbone(samples)
+        print("Backbone-initial outputs : ", [ft.size() for ft in features])
         srcs = []
         masks = []
         for l, feat in enumerate(features):
@@ -310,8 +311,11 @@ class GroundingDINO(nn.Module):
                 srcs.append(src)
                 masks.append(mask)
                 poss.append(pos_l)
-
+        
+        print("Backbone-modified outputs : ", [ft.size() for ft in srcs])
         input_query_bbox = input_query_label = attn_mask = dn_meta = None
+
+        # Feature enhancer? --> why do we need to pass mask? --> for the self-attention part?
         hs, reference, hs_enc, ref_enc, init_box_proposal = self.transformer(
             srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict
         )

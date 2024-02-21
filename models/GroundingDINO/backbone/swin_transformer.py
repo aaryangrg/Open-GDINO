@@ -383,6 +383,8 @@ class BasicLayer(nn.Module):
         # build blocks
         self.blocks = nn.ModuleList(
             [
+                # Window size --> deformable attention window for attention
+                # shift_size ? --> stride (how much overlap to keep amongst tokens)
                 SwinTransformerBlock(
                     dim=dim,
                     num_heads=num_heads,
@@ -729,6 +731,11 @@ class SwinTransformer(nn.Module):
         outs = []
         for i in range(self.num_layers):
             layer = self.layers[i]
+            # x_out --> not downsampled
+            # H,W --> original input feature res
+            # x --> downsampled out (if enabled, else  = x_out)
+            # Wh --> downsampled H (H+1 // 2) if enabled else = H
+            # Ww --> downsmapled W (H+1 // 2) if enabled else = W
             x_out, H, W, x, Wh, Ww = layer(x, Wh, Ww)
 
             if i in self.out_indices:
