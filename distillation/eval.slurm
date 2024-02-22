@@ -20,7 +20,3 @@ python3 ../test.py \
     --output_dir ../results/eval/pretrained/ \
     --datasets ../config/coco_od_datasets.json \
     --eval \
-
-    
-
-    

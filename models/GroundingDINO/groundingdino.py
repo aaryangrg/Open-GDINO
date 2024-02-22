@@ -290,11 +290,12 @@ class GroundingDINO(nn.Module):
         if isinstance(samples, (list, torch.Tensor)):
             samples = nested_tensor_from_tensor_list(samples)
         features, poss = self.backbone(samples)
-        print("Backbone-initial outputs : ", [ft.size() for ft in features])
         srcs = []
         masks = []
+        print("Initial Backbone Features :")
         for l, feat in enumerate(features):
             src, mask = feat.decompose()
+            print(f"src = {src.size()} , mask = {mask.size()}")
             srcs.append(self.input_proj[l](src))
             masks.append(mask)
             assert mask is not None

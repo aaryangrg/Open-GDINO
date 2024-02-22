@@ -383,8 +383,6 @@ class BasicLayer(nn.Module):
         # build blocks
         self.blocks = nn.ModuleList(
             [
-                # Window size --> deformable attention window for attention
-                # shift_size ? --> stride (how much overlap to keep amongst tokens)
                 SwinTransformerBlock(
                     dim=dim,
                     num_heads=num_heads,
@@ -567,6 +565,7 @@ class SwinTransformer(nn.Module):
         #     print("use_checkpoint!!!!!!!!!!!!!!!!!!!!!!!!")
 
         # split image into non-overlapping patches
+        # B x (H//4) x (W//4) x C or closest to it (with padding)
         self.patch_embed = PatchEmbed(
             patch_size=patch_size,
             in_chans=in_chans,
@@ -689,12 +688,13 @@ class SwinTransformer(nn.Module):
             )
             x = (x + absolute_pos_embed).flatten(2).transpose(1, 2)  # B Wh*Ww C
         else:
-            x = x.flatten(2).transpose(1, 2)
+            x = x.flatten(2).transpose(1, 2) # B Wh*Ww C
         x = self.pos_drop(x)
 
         outs = []
         for i in range(self.num_layers):
             layer = self.layers[i]
+            # x, Wh, Ww --> new dimensions || downsampled output
             x_out, H, W, x, Wh, Ww = layer(x, Wh, Ww)
             # import ipdb; ipdb.set_trace()
 
