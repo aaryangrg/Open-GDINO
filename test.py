@@ -23,7 +23,7 @@ from datasets import bbuild_dataset, get_coco_api_from_dataset
 from engine import evaluate, train_one_epoch
 
 from groundingdino.util.utils import clean_state_dict
-
+sys.path.append('/home/aaryang/experiments/Open-GDINO/effvit')
 from effvit.efficientvit.models.efficientvit.dino_backbone import flexible_efficientvit_backbone_swin_t_224_1k
 
 
