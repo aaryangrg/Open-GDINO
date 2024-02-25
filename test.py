@@ -237,6 +237,7 @@ def main(args):
     )
     # prep for training
     trainer.prep_for_training_custom(run_config, config["ema_decay"], args.fp16)
+    print("Prep for training...")
 
     # Extract LR scheduler + Optimizer + scaler??
 
@@ -266,6 +267,7 @@ def main(args):
             args.start_epoch = checkpoint['epoch'] + 1
 
     if (not args.resume) and args.pretrain_model_path:
+        print("loading original model weights")
         checkpoint = torch.load(args.pretrain_model_path, map_location='cpu')['model']
         from collections import OrderedDict
         _ignorekeywordlist = args.finetune_ignore if args.finetune_ignore else []
@@ -277,13 +279,14 @@ def main(args):
                     ignorelist.append(keyname)
                     return False
             return True
-
+        print("Cleaning state dict")
         # logger.info("Ignore keys: {}".format(json.dumps(ignorelist, indent=2)))
         _tmp_st = OrderedDict({k:v for k, v in utils.clean_state_dict(checkpoint).items() if check_keep(k, _ignorekeywordlist)})
 
         _load_output = model_without_ddp.load_state_dict(_tmp_st, strict=False)
         logger.info(str(_load_output))
 
+    print("Starting eval")
  
     
     if args.eval:
