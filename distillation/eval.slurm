@@ -21,4 +21,4 @@ python3 ../test.py \
     --datasets ../config/coco_od_datasets.json \
     --config ../effvit/configs/cls/imagenet/b1.yaml \
     --path ../experiments/effvit/backbone_train/ \
-    --distributed \
+    --distributed  true \
