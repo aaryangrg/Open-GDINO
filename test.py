@@ -153,6 +153,12 @@ def main(args):
     logger.debug("build model, done.")
 
     model_2 = flexible_efficientvit_backbone_swin_t_224_1k()
+    dummy = torch.rand(2,3,1024,1024)
+    dummy = dummy.to("cuda")
+    model_2.cuda()
+    model_2.eval()
+    outs = model_2(dummy)
+
 
     model_without_ddp = model
     if args.distributed:
