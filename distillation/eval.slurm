@@ -15,7 +15,7 @@ echo CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES
 nvidia-smi
 
 python3 ../test.py \
-    --config_file ../config/cfg_coco.py \
+    --config_file ../config/cfg_odvg.py \
     --pretrain_model_path ../weights/groundingdino_swint_ogc.pth \
     --output_dir ../results/eval/pretrained/ \
     --datasets ../config/coco_od_datasets.json \
