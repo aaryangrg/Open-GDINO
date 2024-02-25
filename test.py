@@ -76,7 +76,7 @@ def get_args_parser():
     
     parser.add_argument('--distributed', type = bool, default = False)
 
-    parser.add_argument("config", metavar="FILE", help="config file") # Student Model YAML
+    parser.add_argument("--config", metavar="FILE", help="config file") # Student Model YAML
     parser.add_argument("--path", type=str, metavar="DIR", help="run directory") # Path for training outs --> checkpoints + logs
     parser.add_argument("--manual_seed", type=int, default=0)
     # parser.add_argument("--resume", action="store_true")
