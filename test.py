@@ -236,7 +236,7 @@ def main(args):
         last_gamma=args.last_gamma,
     )
     # prep for training
-    trainer.prep_for_training(run_config, config["ema_decay"], args.fp16)
+    trainer.prep_for_training_custom(run_config, config["ema_decay"], args.fp16)
 
     # Extract LR scheduler + Optimizer + scaler??
 
