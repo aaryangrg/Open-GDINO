@@ -157,6 +157,7 @@ def main(args):
     dummy = dummy.to("cuda")
     model_2.cuda()
     model_2.eval()
+    model_2.apply(lambda m: setattr(m, 'width_mult', 1.0))
     outs = model_2(dummy)
 
 
