@@ -287,6 +287,7 @@ def main(args):
         logger.info(str(_load_output))
 
     print("Starting eval")
+    trainer.train(save_freq=args.save_freq)
  
     
     if args.eval:
