@@ -20,4 +20,5 @@ python3 ../test.py \
     --output_dir ../results/eval/pretrained/ \
     --datasets ../config/coco_od_datasets.json \
     --config ../effvit/configs/cls/imagenet/b1.yaml \
+    --path ../experiments/effvit/backbone_train/ \
     --fp16 \
