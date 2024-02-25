@@ -10,6 +10,7 @@ import os, sys
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, DistributedSampler
+import importlib
 
 from util.get_param_dicts import get_param_dict
 from util.logger import setup_logger
@@ -22,6 +23,9 @@ from datasets import build_dataset, get_coco_api_from_dataset
 from engine import evaluate, train_one_epoch
 
 from groundingdino.util.utils import clean_state_dict
+sys.path.append("/home/aaryang/experiements")
+dino_backbone = importlib.import_module("EffViT.efficientvit.models.efficientvit.dino_backbone")
+flexible_efficientvit_backbone_swin_t_224_1k = dino_backbone.flexible_efficientvit_backbone_swin_t_224_1k
 
 
 def get_args_parser():
@@ -149,7 +153,8 @@ def main(args):
     model.to(device)
     logger.debug("build model, done.")
 
-
+    model_2 = flexible_efficientvit_backbone_swin_t_224_1k()
+    
     model_without_ddp = model
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
