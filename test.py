@@ -23,7 +23,7 @@ from datasets import bbuild_dataset, get_coco_api_from_dataset
 from engine import evaluate, train_one_epoch
 
 from groundingdino.util.utils import clean_state_dict
-sys.path.append("/home/aaryang/experiements")
+sys.path.append("/home/aaryang/experiements/")
 dino_backbone = importlib.import_module("EffViT.efficientvit.models.efficientvit.dino_backbone")
 flexible_efficientvit_backbone_swin_t_224_1k = dino_backbone.flexible_efficientvit_backbone_swin_t_224_1k
 
