@@ -223,7 +223,7 @@ def main(args):
 
     trainer = GdinoBackboneTrainer(
         path=args.path,
-        bit_backbone=effvit_backbone,
+        vit_backbone=effvit_backbone,
         data_provider=data_loader_train,
         auto_restart_thresh=args.auto_restart_thresh,
     )
