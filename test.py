@@ -23,8 +23,16 @@ from datasets import bbuild_dataset, get_coco_api_from_dataset
 from engine import evaluate, train_one_epoch
 
 from groundingdino.util.utils import clean_state_dict
+
+#EfficientViT Imports
 sys.path.append('/home/aaryang/experiments/Open-GDINO/effvit')
 from effvit.efficientvit.models.efficientvit.dino_backbone import flexible_efficientvit_backbone_swin_t_224_1k
+from effvit.efficientvit.clscore.trainer import ClsRunConfig
+from effvit.efficientvit.clscore.trainer.mutual_trainer import ClsMutualTrainer
+from effvit.efficientvit.models.nn.drop import apply_drop_func
+from effvit.efficientvit.apps.utils import dump_config, parse_unknown_args
+from effvit.efficientvit.apps import setup
+from effvit.efficientvit.clscore.trainer.gdino_backbone import GdinoBackboneTrainer
 
 
 def get_args_parser():
@@ -42,18 +50,14 @@ def get_args_parser():
     parser.add_argument('--fix_size', action='store_true')
 
     # training parameters
-    parser.add_argument('--output_dir', default='',
-                        help='path where to save, empty for no saving')
-    parser.add_argument('--note', default='',
-                        help='add some notes to the experiment')
-    parser.add_argument('--device', default='cuda',
-                        help='device to use for training / testing')
+    parser.add_argument('--output_dir', default='',help='path where to save, empty for no saving')
+    parser.add_argument('--note', default='',help='add some notes to the experiment')
+    parser.add_argument('--device', default='cuda',help='device to use for training / testing')
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--resume', default='', help='resume from checkpoint')
     parser.add_argument('--pretrain_model_path', help='load from other checkpoint')
     parser.add_argument('--finetune_ignore', type=str, nargs='+')
-    parser.add_argument('--start_epoch', default=0, type=int, metavar='N',
-                        help='start epoch')
+    parser.add_argument('--start_epoch', default=0, type=int, metavar='N',help='start epoch')
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--num_workers', default=8, type=int)
     parser.add_argument('--test', action='store_true')
@@ -63,17 +67,25 @@ def get_args_parser():
     parser.add_argument('--save_log', action='store_true')
 
     # distributed training parameters
-    parser.add_argument('--world_size', default=1, type=int,
-                        help='number of distributed processes')
+    parser.add_argument('--world_size', default=1, type=int,help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
-    parser.add_argument('--rank', default=0, type=int,
-                        help='number of distributed processes')
+    parser.add_argument('--rank', default=0, type=int,help='number of distributed processes')
     parser.add_argument("--local_rank", type=int, help='local rank for DistributedDataParallel')
     parser.add_argument("--local-rank", type=int, help='local rank for DistributedDataParallel')
-    parser.add_argument('--amp', action='store_true',
-                        help="Train with mixed precision")
+    parser.add_argument('--amp', action='store_true',help="Train with mixed precision")
     
     parser.add_argument('--distributed', type = bool, default = False)
+
+    parser.add_argument("config", metavar="FILE", help="config file") # Student Model YAML
+    parser.add_argument("--path", type=str, metavar="DIR", help="run directory") # Path for training outs --> checkpoints + logs
+    parser.add_argument("--manual_seed", type=int, default=0)
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--fp16", action="store_true")
+    # initialization
+    parser.add_argument("--rand_init", type=str, default="trunc_normal@0.02")
+    parser.add_argument("--last_gamma", type=float, default=0)
+    parser.add_argument("--auto_restart_thresh", type=float, default=1.0)
+    parser.add_argument("--save_freq", type=int, default=1)
     return parser
 
 def build_model_main(args):
@@ -146,43 +158,27 @@ def main(args):
     random.seed(seed)
 
 
+    # EfficientViT Args parse + setup
+    #setup unknown args --> effvit
+    config = setup.setup_exp_config(args.config, recursive=True)
+    run_config = setup.setup_run_config(config, ClsRunConfig)
+
+    # Extract LR scheduler + Optimizer from this
+
     logger.debug("build model ... ...")
     model, criterion, postprocessors = build_model_main(args)
     wo_class_error = False
     model.to(device)
     logger.debug("build model, done.")
 
-    model_2 = flexible_efficientvit_backbone_swin_t_224_1k()
-    dummy = torch.rand(2,3,1024,1024)
-    dummy = dummy.to("cuda")
-    model_2.cuda()
-    model_2.eval()
-    model_2.apply(lambda m: setattr(m, 'width_mult', 1.0))
-    outs = model_2(dummy)
+    effvit_backbone = flexible_efficientvit_backbone_swin_t_224_1k()
 
-
+    # make effvit_backbone data parallel as well as the main model (set to eval)
     model_without_ddp = model
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
         model._set_static_graph()
         model_without_ddp = model.module
-    n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    logger.info('number of params:'+str(n_parameters))
-    # logger.info("params before freezing:\n"+json.dumps({n: p.numel() for n, p in model.named_parameters() if p.requires_grad}, indent=2))
-
-    param_dicts = get_param_dict(args, model_without_ddp)
-    
-    # freeze some layers
-    if args.freeze_keywords is not None:
-        for name, parameter in model.named_parameters():
-            for keyword in args.freeze_keywords:
-                if keyword in name:
-                    parameter.requires_grad_(False)
-                    break
-    # logger.info("params after freezing:\n"+json.dumps({n: p.numel() for n, p in model.named_parameters() if p.requires_grad}, indent=2))
-
-    optimizer = torch.optim.AdamW(param_dicts, lr=args.lr,
-                                  weight_decay=args.weight_decay)
 
     logger.debug("build dataset ... ...")
     if not args.eval:
@@ -218,13 +214,30 @@ def main(args):
     data_loader_val = DataLoader(dataset_val, 4, sampler=sampler_val,
                                  drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers)
 
-    if args.onecyclelr:
-        lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=args.lr, steps_per_epoch=len(data_loader_train), epochs=args.epochs, pct_start=0.2)
-    elif args.multi_step_lr:
-        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.lr_drop_list)
-    else:
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, args.lr_drop)
+    # if args.onecyclelr:
+    #     lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=args.lr, steps_per_epoch=len(data_loader_train), epochs=args.epochs, pct_start=0.2)
+    # elif args.multi_step_lr:
+    #     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.lr_drop_list)
+    # else:
+    #     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, args.lr_drop)
 
+    trainer = GdinoBackboneTrainer(
+        path=args.path,
+        model=effvit_backbone,
+        data_provider=data_loader_train,
+        auto_restart_thresh=args.auto_restart_thresh,
+    )
+
+    # initialization --> weight init (norm layers) etc
+    setup.init_model(
+        trainer.network,
+        rand_init=args.rand_init,
+        last_gamma=args.last_gamma,
+    )
+    # prep for training
+    trainer.prep_for_training(run_config, config["ema_decay"], args.fp16)
+
+    # Extract LR scheduler + Optimizer + scaler??
 
     base_ds = get_coco_api_from_dataset(dataset_val)
 
