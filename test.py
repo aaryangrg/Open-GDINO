@@ -224,6 +224,7 @@ def main(args):
     trainer = GdinoBackboneTrainer(
         path=args.path,
         vit_backbone=effvit_backbone,
+        dino_backbone = model_without_ddp,
         data_provider=data_loader_train,
         auto_restart_thresh=args.auto_restart_thresh,
     )
