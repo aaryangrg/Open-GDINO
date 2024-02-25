@@ -24,7 +24,7 @@ from engine import evaluate, train_one_epoch
 
 from groundingdino.util.utils import clean_state_dict
 
-import effvit
+from effvit.efficientvit.models.efficientvit.dino_backbone import flexible_efficientvit_backbone_swin_t_224_1k
 
 
 def get_args_parser():
@@ -152,7 +152,7 @@ def main(args):
     model.to(device)
     logger.debug("build model, done.")
 
-    # model_2 = flexible_efficientvit_backbone_swin_t_224_1k()
+    model_2 = flexible_efficientvit_backbone_swin_t_224_1k()
 
     model_without_ddp = model
     if args.distributed:
