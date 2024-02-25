@@ -19,4 +19,3 @@ python3 ../test.py \
     --pretrain_model_path ../weights/groundingdino_swint_ogc.pth \
     --output_dir ../results/eval/pretrained/ \
     --datasets ../config/coco_od_datasets.json \
-    --eval \
