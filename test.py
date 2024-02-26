@@ -36,7 +36,6 @@ from effvit.efficientvit.apps import setup
 from effvit.efficientvit.clscore.trainer.gdino_backbone import GdinoBackboneTrainer
 
 
-dist.init_process_group(backend='nccl', init_method='env://')
 
 def get_args_parser():
     parser = argparse.ArgumentParser('Set transformer detector', add_help=False)
@@ -104,7 +103,7 @@ def build_model_main(args):
 def main(args):
     
 
-    # utils.setup_distributed(args)
+    utils.setup_distributed(args)
     # load cfg file and update the args
     print("Loading config file from {}".format(args.config_file))
     time.sleep(args.rank * 0.02)
