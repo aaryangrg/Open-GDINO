@@ -17,7 +17,7 @@ from util.logger import setup_logger
 from util.slconfig import DictAction, SLConfig
 from util.utils import  BestMetricHolder
 from util.misc import MetricLogger
-import util.utils as utils
+import util.misc as utils
 import datasets
 from datasets import bbuild_dataset, get_coco_api_from_dataset
 from engine import evaluate, train_one_epoch
