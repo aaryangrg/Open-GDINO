@@ -174,8 +174,13 @@ def main(args):
     model.to(device)
     logger.debug("build model, done.")
 
+    pytorch_total = sum(p.numel() for p in model.backbone.parameters() if p.requires_grad)
+    print("Swin backbone params : ", pytorch_total)
+
     effvit_backbone = flexible_efficientvit_backbone_swin_t_224_1k()
     effvit_backbone.to("cuda")
+    pytorch_total_params = sum(p.numel() for p in effvit_backbone.parameters() if p.requires_grad)
+    print("Backbone params : ", pytorch_total_params)
 
     # make effvit_backbone data parallel as well as the main model (set to eval)
     model_without_ddp = model
