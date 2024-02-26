@@ -11,6 +11,7 @@ source /home/aaryang/anaconda3/bin/activate
 conda activate opdino
 
 echo CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES
+export TOKENIZERS_PARALLELISM=false
 
 nvidia-smi
 
