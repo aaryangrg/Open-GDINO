@@ -34,7 +34,6 @@ from effvit.efficientvit.apps.utils import dump_config, parse_unknown_args
 from effvit.efficientvit.apps import setup
 from effvit.efficientvit.clscore.trainer.gdino_backbone import GdinoBackboneTrainer
 
-torch.distributed.init_process_group(backend="nccl")
 
 def get_args_parser():
     parser = argparse.ArgumentParser('Set transformer detector', add_help=False)
@@ -183,7 +182,7 @@ def main(args):
 
     if args.distributed :
         # effvit_backbone = torch.nn.parallel.DistributedDataParallel(effvit_backbone, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
-        effvit_backbone = torch.nn.parallel.DistributedDataParallel(effvit_backbone)
+        effvit_backbone = torch.nn.DataParallel(effvit_backbone)
         effvit_backbone = effvit_backbone.module
     
     logger.debug("build dataset ... ...")
