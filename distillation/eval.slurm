@@ -24,4 +24,3 @@ python3 -m torch.distributed.launch  --nproc_per_node 2  ../test.py \
     --path ../experiments/effvit/backbone_train_final/ \
     --distributed  true \
     --fp16 \
-    --full_flex_train false \

@@ -88,7 +88,7 @@ def get_args_parser():
     parser.add_argument("--last_gamma", type=float, default=0)
     parser.add_argument("--auto_restart_thresh", type=float, default=1.0)
     parser.add_argument("--save_freq", type=int, default=1)
-    parser.add_argument("--full_flex_train", type = bool , default = True)
+    parser.add_argument("--full_flex_train", type = bool , default = False)
     return parser
 
 def build_model_main(args):
