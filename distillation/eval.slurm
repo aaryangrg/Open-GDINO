@@ -22,4 +22,4 @@ python3  ../test.py \
     --config ../effvit/configs/cls/imagenet/b1.yaml \
     --path ../experiments/effvit/backbone_train_final/ \
     --distributed  true \
-    --fp16 true \
+    --fp16 \
