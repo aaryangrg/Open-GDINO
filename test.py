@@ -177,27 +177,24 @@ def main(args):
 
     # make effvit_backbone data parallel as well as the main model (set to eval)
     model_without_ddp = model
-    # if args.distributed:
-    #     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
-    #     model._set_static_graph()
-    #     model_without_ddp = model.module
 
     if args.distributed :
-        # effvit_backbone = torch.nn.parallel.DistributedDataParallel(effvit_backbone, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
-        effvit_backbone = torch.nn.DataParallel(effvit_backbone)
+        effvit_backbone = torch.nn.parallel.DistributedDataParallel(effvit_backbone, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
         effvit_backbone = effvit_backbone.module
+        # effvit_backbone = torch.nn.DataParallel(effvit_backbone)
+        # effvit_backbone = effvit_backbone.module
     
     logger.debug("build dataset ... ...")
     dataset_train = bbuild_dataset(image_set='train', args=args, datasetinfo=dataset_meta["train"][0])
     dataset_val = bbuild_dataset(image_set='val', args=args, datasetinfo=dataset_meta["val"][0])
     logger.debug("build dataset, done.")
 
-    # if args.distributed:
-    #     sampler_val = DistributedSampler(dataset_val, shuffle=False)
-    #     sampler_train = DistributedSampler(dataset_train)
-    # else:
-    sampler_val = torch.utils.data.SequentialSampler(dataset_val)
-    sampler_train = torch.utils.data.RandomSampler(dataset_train)
+    if args.distributed:
+        sampler_val = DistributedSampler(dataset_val, shuffle=False)
+        sampler_train = DistributedSampler(dataset_train)
+    else:
+        sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+        sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
     print("batch_size : ", args.batch_size)
     batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
