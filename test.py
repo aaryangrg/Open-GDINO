@@ -219,7 +219,8 @@ def main(args):
         data_provider=data_loader_train,
         auto_restart_thresh=args.auto_restart_thresh,
         metric_logger = metric_logger,
-        train_full_flexible_model = args.full_flex_train
+        train_full_flexible_model = args.full_flex_train,
+        fp16_training = args.fp16 
     )
 
     setup.init_model(
