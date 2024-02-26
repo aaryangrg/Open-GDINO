@@ -175,13 +175,13 @@ def main(args):
 
     # make effvit_backbone data parallel as well as the main model (set to eval)
     model_without_ddp = model
-    if args.distributed:
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
-        model._set_static_graph()
-        model_without_ddp = model.module
+    # if args.distributed:
+    #     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
+    #     model._set_static_graph()
+    #     model_without_ddp = model.module
 
     if args.distributed :
-        effvit_backbone = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
+        effvit_backbone = torch.nn.parallel.DistributedDataParallel(effvit_backbone, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
         effvit_backbone = effvit_backbone.module
     
     logger.debug("build dataset ... ...")
