@@ -21,6 +21,7 @@ import util.misc as utils
 import datasets
 from datasets import bbuild_dataset, get_coco_api_from_dataset
 from engine import evaluate, train_one_epoch
+import torch.distributed as dist
 
 from groundingdino.util.utils import clean_state_dict
 
@@ -34,6 +35,8 @@ from effvit.efficientvit.apps.utils import dump_config, parse_unknown_args
 from effvit.efficientvit.apps import setup
 from effvit.efficientvit.clscore.trainer.gdino_backbone import GdinoBackboneTrainer
 
+
+dist.init_process_group(backend='nccl', init_method='env://')
 
 def get_args_parser():
     parser = argparse.ArgumentParser('Set transformer detector', add_help=False)
