@@ -34,6 +34,7 @@ from effvit.efficientvit.apps.utils import dump_config, parse_unknown_args
 from effvit.efficientvit.apps import setup
 from effvit.efficientvit.clscore.trainer.gdino_backbone import GdinoBackboneTrainer
 
+torch.distributed.init_process_group(backend="nccl")
 
 def get_args_parser():
     parser = argparse.ArgumentParser('Set transformer detector', add_help=False)
