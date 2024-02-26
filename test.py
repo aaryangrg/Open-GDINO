@@ -16,8 +16,8 @@ from util.get_param_dicts import get_param_dict
 from util.logger import setup_logger
 from util.slconfig import DictAction, SLConfig
 from util.utils import  BestMetricHolder
-import util.misc as utils
-
+from util.misc import MetricLogger
+import util.utils as utils
 import datasets
 from datasets import bbuild_dataset, get_coco_api_from_dataset
 from engine import evaluate, train_one_epoch
@@ -196,9 +196,13 @@ def main(args):
         sampler_val = torch.utils.data.SequentialSampler(dataset_val)
         sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
+    print("batch_size : ", args.batch_size)
     batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
     data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,collate_fn=utils.collate_fn, num_workers=args.num_workers)
     data_loader_val = DataLoader(dataset_val, 4, sampler=sampler_val,drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers)
+
+    metric_logger = MetricLogger(delimiter="  ")
+    metric_logger.add_meter('loss', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
 
     trainer = GdinoBackboneTrainer(
         path=args.path,
@@ -206,6 +210,7 @@ def main(args):
         dino_backbone = model_without_ddp,
         data_provider=data_loader_train,
         auto_restart_thresh=args.auto_restart_thresh,
+        metric_logger = metric_logger
     )
 
     setup.init_model(
