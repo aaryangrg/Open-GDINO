@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --account=group3
-#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/eval/pretrained.out
+#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/effvit/backbone.out
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:2   # And two GPU
 #SBATCH --cpus-per-task=8           # Two cores per task
-#SBATCH --job-name=GDinoTest
-#SBATCH --constraint=gmem12
+#SBATCH --job-name=DistillBackbone
+#SBATCH --constraint=gmem24
 
 source /home/aaryang/anaconda3/bin/activate
 conda activate opdino
@@ -20,5 +20,5 @@ python3 -m torch.distributed.launch  --nproc_per_node 2 ../test.py \
     --output_dir ../results/eval/pretrained/ \
     --datasets ../config/coco_od_datasets.json \
     --config ../effvit/configs/cls/imagenet/b1.yaml \
-    --path ../experiments/effvit/backbone_train/ \
+    --path ../experiments/effvit/backbone_train_final/ \
     --distributed  true \
