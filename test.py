@@ -88,6 +88,7 @@ def get_args_parser():
     parser.add_argument("--last_gamma", type=float, default=0)
     parser.add_argument("--auto_restart_thresh", type=float, default=1.0)
     parser.add_argument("--save_freq", type=int, default=1)
+    parser.add_argument("--full_flex_train", type = bool , default = True)
     return parser
 
 def build_model_main(args):
@@ -212,7 +213,8 @@ def main(args):
         dino_backbone = model_without_ddp,
         data_provider=data_loader_train,
         auto_restart_thresh=args.auto_restart_thresh,
-        metric_logger = metric_logger
+        metric_logger = metric_logger,
+        train_full_flexible_model = args.full_flex_train
     )
 
     setup.init_model(

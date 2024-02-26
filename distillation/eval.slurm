@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --account=group3
-#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/effvit/backbone.out
+#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/effvit/fixed_backbone.out
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:2   # And two GPU
 #SBATCH --cpus-per-task=8           # Two cores per task
-#SBATCH --job-name=MxdPrec
+#SBATCH --job-name=BackDistill
 #SBATCH --constraint=gmem24
 
 source /home/aaryang/anaconda3/bin/activate
@@ -24,3 +24,4 @@ python3 -m torch.distributed.launch  --nproc_per_node 2  ../test.py \
     --path ../experiments/effvit/backbone_train_final/ \
     --distributed  true \
     --fp16 \
+    --full_flex_train false \
