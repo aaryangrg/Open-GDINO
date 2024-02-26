@@ -174,11 +174,13 @@ def main(args):
     logger.debug("build model, done.")
 
     effvit_backbone = flexible_efficientvit_backbone_swin_t_224_1k()
+    effvit_backbone.to("cuda")
 
     # make effvit_backbone data parallel as well as the main model (set to eval)
     model_without_ddp = model
 
     if args.distributed :
+
         effvit_backbone = torch.nn.parallel.DistributedDataParallel(effvit_backbone, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
         effvit_backbone = effvit_backbone.module
         # effvit_backbone = torch.nn.DataParallel(effvit_backbone)
