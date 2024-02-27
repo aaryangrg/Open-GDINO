@@ -15,7 +15,7 @@ export TOKENIZERS_PARALLELISM=false
 
 nvidia-smi
 
-python3 -m torch.distributed.launch  --nproc_per_node 1  ../main.py \
+python3 ../main.py \
     --config_file ../config/cfg_coco.py \
     --pretrain_model_path ../weights/groundingdino_swint_ogc.pth \
     --output_dir ../results/eval/pretrained_swint_480_360/ \
