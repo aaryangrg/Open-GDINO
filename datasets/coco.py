@@ -556,7 +556,7 @@ def make_coco_transforms(image_set, fix_size=False, strong_aug=False, args=None)
 
         # 480 x 360 roughly --> testing model performance
         return T.Compose([
-            T.RandomResize([360,480]),
+            T.RandomResize([240,320]),
             normalize,
         ])
 
