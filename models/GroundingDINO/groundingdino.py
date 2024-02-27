@@ -292,10 +292,8 @@ class GroundingDINO(nn.Module):
         features, poss = self.backbone(samples)
         srcs = []
         masks = []
-        print("Initial Backbone Features :")
         for l, feat in enumerate(features):
             src, mask = feat.decompose()
-            print(f"src = {src.size()} , mask = {mask.size()}")
             srcs.append(self.input_proj[l](src))
             masks.append(mask)
             assert mask is not None
@@ -312,8 +310,6 @@ class GroundingDINO(nn.Module):
                 srcs.append(src)
                 masks.append(mask)
                 poss.append(pos_l)
-        
-        print("Backbone-modified outputs : ", [ft.size() for ft in srcs])
         input_query_bbox = input_query_label = attn_mask = dn_meta = None
 
         # Feature enhancer? --> why do we need to pass mask? --> for the self-attention part?

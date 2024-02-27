@@ -549,16 +549,16 @@ def make_coco_transforms(image_set, fix_size=False, strong_aug=False, args=None)
                 normalize,
             ])   
 
-        # return T.Compose([
-        #     T.RandomResize([max(scales)], max_size=max_size),
-        #     normalize,
-        # ])
-
-        # 480 x 360 roughly --> testing model performance
         return T.Compose([
-            T.RandomResize([480], max_size=max_size),
+            T.RandomResize([max(scales)], max_size=max_size),
             normalize,
         ])
+
+        # 480 x 360 roughly --> testing model performance
+        # return T.Compose([
+        #     T.RandomResize([480], max_size=max_size),
+        #     normalize,
+        # ])
 
 
     raise ValueError(f'unknown {image_set}')
