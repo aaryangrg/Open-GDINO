@@ -18,7 +18,7 @@ from util.utils import  BestMetricHolder
 import util.misc as utils
 
 import datasets
-from datasets import build_dataset, get_coco_api_from_dataset
+from datasets import bbuild_dataset, get_coco_api_from_dataset
 from engine import evaluate, train_one_epoch
 
 from groundingdino.util.utils import clean_state_dict
@@ -176,17 +176,17 @@ def main(args):
     if not args.eval:
         num_of_dataset_train = len(dataset_meta["train"])
         if num_of_dataset_train == 1:
-            dataset_train = build_dataset(image_set='train', args=args, datasetinfo=dataset_meta["train"][0])
+            dataset_train = bbuild_dataset(image_set='train', args=args, datasetinfo=dataset_meta["train"][0])
         else:
             from torch.utils.data import ConcatDataset
             dataset_train_list = []
             for idx in range(len(dataset_meta["train"])):
-                dataset_train_list.append(build_dataset(image_set='train', args=args, datasetinfo=dataset_meta["train"][idx]))
+                dataset_train_list.append(bbuild_dataset(image_set='train', args=args, datasetinfo=dataset_meta["train"][idx]))
             dataset_train = ConcatDataset(dataset_train_list)
         logger.debug("build dataset, done.")
         logger.debug(f'number of training dataset: {num_of_dataset_train}, samples: {len(dataset_train)}')
 
-    dataset_val = build_dataset(image_set='val', args=args, datasetinfo=dataset_meta["val"][0])
+    dataset_val = bbuild_dataset(image_set='val', args=args, datasetinfo=dataset_meta["val"][0])
 
     if args.distributed:
         sampler_val = DistributedSampler(dataset_val, shuffle=False)
