@@ -248,10 +248,6 @@ class Transformer(nn.Module):
             (spatial_shapes.new_zeros((1,)), spatial_shapes.prod(1).cumsum(0)[:-1])
         )
         valid_ratios = torch.stack([self.get_valid_ratio(m) for m in masks], 1)
-
-        print(src_flatten.shape, " Actual Features")
-        print(mask_flatten.shape, " Masks")
-        print(lvl_pos_embed_flatten, " Pos + Level Embeddings")
         
         # two stage
         enc_topk_proposals = enc_refpoint_embed = None
