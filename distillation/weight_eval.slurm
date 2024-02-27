@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --account=group3
-#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/eval/pretrained_swint_320_240_exact.out
+#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/eval/pretrained_swint_1333_1000_exact.out
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1   # And two GPU
 #SBATCH --cpus-per-task=8           # Two cores per task
-#SBATCH --job-name=320Eval
+#SBATCH --job-name=1333Eval
 #SBATCH --constraint=gmem16
 
 source /home/aaryang/anaconda3/bin/activate
@@ -18,7 +18,7 @@ nvidia-smi
 python3 ../main.py \
     --config_file ../config/cfg_coco.py \
     --pretrain_model_path ../weights/groundingdino_swint_ogc.pth \
-    --output_dir ../results/eval/pretrained_swint_320_240_exact/ \
+    --output_dir ../results/eval/pretrained_swint_1333_1000_exact/ \
     --datasets ../config/coco_od_datasets.json \
     --eval \
-    --eval_batch 16
+    --eval_batch 4
