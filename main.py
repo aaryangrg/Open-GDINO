@@ -70,6 +70,7 @@ def get_args_parser():
     parser.add_argument('--amp', action='store_true',
                         help="Train with mixed precision")
     parser.add_argument("--eval_batch", type = int, default = 4)
+    parser.add_argument("--distributed", type = bool, default = False)
     return parser
 
 
