@@ -559,11 +559,15 @@ def make_coco_transforms(image_set, fix_size=False, strong_aug=False, args=None)
         #     T.RandomResize([(320,240)]),
         #     normalize,
         # ])
-        return T.Compose([
-            T.RandomResize([480], max_size=max_size),
-            normalize,
-        ])
+        # return T.Compose([
+        #     T.RandomResize([480], max_size=max_size),
+        #     normalize,
+        # ])
 
+        return T.Compose([
+            T.CenterCrop([240,320]),
+            normalize
+        ])
 
     raise ValueError(f'unknown {image_set}')
 

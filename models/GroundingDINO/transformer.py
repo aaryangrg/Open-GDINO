@@ -410,13 +410,13 @@ class Transformer(nn.Module):
 class TransformerEncoder(nn.Module):
     def __init__(
         self,
-        encoder_layer,
+        encoder_layer, # Image feature self
         num_layers,
         d_model=256,
         num_queries=300,
         enc_layer_share=False,
-        text_enhance_layer=None,
-        feature_fusion_layer=None,
+        text_enhance_layer=None, # Text features self
+        feature_fusion_layer=None, # Cross-Attention Layer
         use_checkpoint=False,
         use_transformer_ckpt=False,
     ):
@@ -546,6 +546,8 @@ class TransformerEncoder(nn.Module):
                 )
 
         # main process
+                
+        #
         for layer_id, layer in enumerate(self.layers):
             # if output.isnan().any() or memory_text.isnan().any():
             #     if os.environ.get('IPDB_SHILONG_DEBUG', None) == 'INFO':

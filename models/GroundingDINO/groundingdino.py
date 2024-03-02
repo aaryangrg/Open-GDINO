@@ -15,6 +15,7 @@
 # Copyright (c) 2020 SenseTime. All Rights Reserved.
 # ------------------------------------------------------------------------
 import copy
+from lib2to3.pgen2 import token
 from typing import List
 
 import torch
@@ -22,6 +23,7 @@ import torch.nn.functional as F
 from torch import nn
 from torchvision.ops.boxes import nms
 from transformers import AutoTokenizer, BertModel, BertTokenizer, RobertaModel, RobertaTokenizerFast
+# from thop import profile
 
 from groundingdino.util import box_ops, get_tokenlizer
 from groundingdino.util.misc import (
@@ -264,6 +266,9 @@ class GroundingDINO(nn.Module):
         else:
             tokenized_for_encoder = tokenized
 
+        # BERT CALL
+        # macs,params = profile(self.bert,(**tokenized_for_encoder,))
+        # print(f"BERT : MACS : {macs} || Params : {params} ")
         bert_output = self.bert(**tokenized_for_encoder)  # bs, 195, 768
 
         encoded_text = self.feat_map(bert_output["last_hidden_state"])  # bs, 195, d_model
@@ -289,6 +294,10 @@ class GroundingDINO(nn.Module):
 
         if isinstance(samples, (list, torch.Tensor)):
             samples = nested_tensor_from_tensor_list(samples)
+
+        # IMAGE BACKBONE CALL
+        # macs,params = profile(self.backbone,(samples,))
+        # print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
         features, poss = self.backbone(samples)
         srcs = []
         masks = []
@@ -312,12 +321,13 @@ class GroundingDINO(nn.Module):
                 poss.append(pos_l)
         input_query_bbox = input_query_label = attn_mask = dn_meta = None
 
-        # Feature enhancer? --> why do we need to pass mask? --> for the self-attention part?
+        # FEATURE ENHANCER + QUERY SELECTION (Encoder + Decoder respectively)
         hs, reference, hs_enc, ref_enc, init_box_proposal = self.transformer(
             srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict
         )
 
         
+        # FINAL PREDICTION & BBOX REFINEMENT LAYERS
         # deformable-detr-like anchor update
         outputs_coord_list = []
         for dec_lid, (layer_ref_sig, layer_bbox_embed, layer_hs) in enumerate(
