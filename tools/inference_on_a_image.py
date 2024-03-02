@@ -60,6 +60,7 @@ def load_image(image_path):
 
     transform = T.Compose(
         [
+            # T.CenterCrop([360,480])
             T.RandomResize([800], max_size=1333),
             T.ToTensor(),
             T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
@@ -168,6 +169,7 @@ if __name__ == "__main__":
                         ")
 
     parser.add_argument("--cpu-only", action="store_true", help="running on cpu only!, default=False")
+    parser.add_argument("--output_file_name", type = str, default = "pred.jpg")
     args = parser.parse_args()
 
     # cfg
@@ -209,6 +211,6 @@ if __name__ == "__main__":
         "labels": pred_phrases,
     }
     image_with_box = plot_boxes_to_image(image_pil, pred_dict)[0]
-    save_path = os.path.join(output_dir, "pred.jpg")
+    save_path = os.path.join(output_dir, args.output_file_name)
     image_with_box.save(save_path)
     print(f"\n======================\n{save_path} saved.\nThe program runs successfully!")
