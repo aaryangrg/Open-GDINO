@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=group3
-#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/eval/pretrained_swint_320_240_crop.out
+#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/eval/pretrained_swint_480_360_crop.out
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1   # And two GPU
 #SBATCH --cpus-per-task=8           # Two cores per task
@@ -18,7 +18,7 @@ nvidia-smi
 python3 ../main.py \
     --config_file ../config/cfg_coco.py \
     --pretrain_model_path ../weights/groundingdino_swint_ogc.pth \
-    --output_dir ../results/eval/pretrained_swint_320_240_crop/ \
+    --output_dir ../results/eval/pretrained_swint_480_360_crop/ \
     --datasets ../config/coco_od_datasets.json \
     --eval \
     --eval_batch 10

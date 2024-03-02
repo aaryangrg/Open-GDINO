@@ -565,7 +565,7 @@ def make_coco_transforms(image_set, fix_size=False, strong_aug=False, args=None)
         # ])
 
         return T.Compose([
-            T.CenterCrop([240,320]),
+            T.CenterCrop([360,480]),
             normalize
         ])
 
