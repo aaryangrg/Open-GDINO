@@ -62,7 +62,7 @@ def load_image(image_path):
         [
             # T.CenterCrop([360,360]),
             # T.RandomResize([800], max_size=1333),
-            T.RandomResize([360], max_size=1333),
+            T.RandomResize([480], max_size=1333),
             T.ToTensor(),
             T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ]
