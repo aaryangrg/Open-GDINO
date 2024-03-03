@@ -5,8 +5,8 @@ import torch
 from PIL import Image, ImageDraw, ImageFont
 
 # please make sure https://github.com/IDEA-Research/GroundingDINO is installed correctly.
-import ..groundingdino.datasets.transforms as T
-from ..groundingdino.models import build_model
+from  ..datasets import transforms as T
+from    ..models import build_model
 from ..groundingdino.util import box_ops
 from ..groundingdino.util.slconfig import SLConfig
 from ..groundingdino.util.utils import clean_state_dict, get_phrases_from_posmap
