@@ -191,9 +191,15 @@ class CenterCrop(object):
     def __init__(self, size):
         self.size = size
 
+    # Crop one dimension to 320 and leave other at aspect ratio
     def __call__(self, img, target):
         image_width, image_height = img.size
-        crop_height, crop_width = self.size
+        if image_width < image_height :
+            crop_height = self.size[1]
+            crop_width = (image_width) // image_height * crop_height
+        else :
+            crop_width = self.size[1]
+            crop_height = (image_height//image_width) * crop_width
         crop_top = int(round((image_height - crop_height) / 2.))
         crop_left = int(round((image_width - crop_width) / 2.))
         return crop(img, target, (crop_top, crop_left, crop_height, crop_width))

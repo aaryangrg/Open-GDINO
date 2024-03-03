@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=group3
-#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/profile/swint.out
+#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/profile/finetuned_swint_360_crop_aspect.out
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1   # And two GPU
 #SBATCH --cpus-per-task=8           # Two cores per task
@@ -18,7 +18,7 @@ nvidia-smi
 python3 ../main.py \
     --config_file ../config/cfg_coco.py \
     --pretrain_model_path ../weights/gdinot-coco-ft.pth \
-    --output_dir ../results/profile/swint \
+    --output_dir ../results/profile/finetuned_swint_360_crop_aspect/ \
     --datasets ../config/coco_od_datasets.json \
     --eval \
-    --eval_batch 1
+    --eval_batch 10
