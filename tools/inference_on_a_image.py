@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 # please make sure https://github.com/IDEA-Research/GroundingDINO is installed correctly.
 from  ..datasets import transforms as T
-from    ..models import build_model
+from   ..models import build_model
 from ..groundingdino.util import box_ops
 from ..groundingdino.util.slconfig import SLConfig
 from ..groundingdino.util.utils import clean_state_dict, get_phrases_from_posmap
