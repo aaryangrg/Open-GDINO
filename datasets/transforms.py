@@ -195,11 +195,11 @@ class CenterCrop(object):
     def __call__(self, img, target):
         image_width, image_height = img.size
         if image_width < image_height :
-            crop_height = self.size[1]
-            crop_width = (image_width) // image_height * crop_height
-        else :
             crop_width = self.size[1]
-            crop_height = (image_height//image_width) * crop_width
+            crop_height = (image_height // image_width) * crop_width
+        else :
+            crop_height = self.size[1]
+            crop_width = (image_width//image_height) * crop_height
         crop_top = int(round((image_height - crop_height) / 2.))
         crop_left = int(round((image_width - crop_width) / 2.))
         return crop(img, target, (crop_top, crop_left, crop_height, crop_width))

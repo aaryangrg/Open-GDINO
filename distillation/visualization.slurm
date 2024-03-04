@@ -16,7 +16,7 @@ export TOKENIZERS_PARALLELISM=false
 python ../tools/inference_on_a_image.py \
   -c ../tools/GroundingDINO_SwinT_OGC.py \
   -p ../weights/groundingdino_swint_ogc.pth \
-  -i /home/c3-0/datasets/COCO/val2017000000227187.jpg \
+  -i /home/c3-0/datasets/COCO/val2017/000000227187.jpg \
   -t "bird" \
   -o ../visualizations/ \
   --output_file_name bird_banana_480_aspect_resize.jpg
