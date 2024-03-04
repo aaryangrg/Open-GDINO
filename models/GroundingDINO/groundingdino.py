@@ -296,8 +296,8 @@ class GroundingDINO(nn.Module):
             samples = nested_tensor_from_tensor_list(samples)
 
         # IMAGE BACKBONE CALL
-        macs,params = profile(self.backbone,(samples,))
-        print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
+        # macs,params = profile(self.backbone,(samples,))
+        # print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
         features, poss = self.backbone(samples)
         srcs = []
         masks = []
