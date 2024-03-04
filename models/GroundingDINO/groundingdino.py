@@ -267,8 +267,8 @@ class GroundingDINO(nn.Module):
             tokenized_for_encoder = tokenized
 
         # BERT CALL
-        macs,params = profile(self.bert,(**tokenized_for_encoder,))
-        print(f"BERT : MACS : {macs} || Params : {params} ")
+        # macs,params = profile(self.bert,(**tokenized_for_encoder,))
+        # print(f"BERT : MACS : {macs} || Params : {params} ")
         bert_output = self.bert(**tokenized_for_encoder)  # bs, 195, 768
 
         encoded_text = self.feat_map(bert_output["last_hidden_state"])  # bs, 195, d_model
