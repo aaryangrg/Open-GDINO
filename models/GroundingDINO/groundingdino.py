@@ -50,7 +50,11 @@ from .transformer import build_transformer
 from .utils import MLP, ContrastiveEmbed, sigmoid_focal_loss
 
 from .matcher import build_matcher
+import sys 
 
+sys.path.append('/home/aaryang/experiments/Open-GDINO/effvit')
+from effvit.efficientvit.models.efficientvit.dino_backbone import flexible_efficientvit_backbone_swin_t_224_1k
+from efficientvit.models.utils import load_state_dict_from_file
 
 
 
@@ -206,6 +210,22 @@ class GroundingDINO(nn.Module):
 
         self._reset_parameters()
 
+        # Initializing custom trained backbone for feature use
+        effvit_backbone = flexible_efficientvit_backbone_swin_t_224_1k()
+        weight = load_state_dict_from_file("/home/aaryang/experiments/Open-GDINO/experiments/effvit/backbone_train_final/checkpoint/model_best.pt")
+        from collections import OrderedDict
+        new_state_dict = OrderedDict()
+        for k, v in weight.items():
+            if "module." in k :
+                name = k[7:]  # Remove "module." (from data-parallel training)
+                new_state_dict[name] = v
+            else :
+                new_state_dict[k] = v
+        effvit_backbone.load_state_dict(new_state_dict)
+        effvit_backbone.to("cuda")
+        self.effvit_backbone = effvit_backbone
+        print("Effvit Backbone loaded correctly")
+
     def _reset_parameters(self):
         # init input_proj
         for proj in self.input_proj:
@@ -299,18 +319,23 @@ class GroundingDINO(nn.Module):
         # macs,params = profile(self.backbone,(samples,))
         # print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
         features, poss = self.backbone(samples)
+
+        effvit_features = self.effvit_backbone(samples.tensors)
         srcs = []
         masks = []
         for l, feat in enumerate(features):
             src, mask = feat.decompose()
-            srcs.append(self.input_proj[l](src))
+            # srcs.append(self.input_proj[l](src))
+            srcs.append(self.input_proj[l](effvit_features[l]))
             masks.append(mask)
             assert mask is not None
+        # Generating additional features --> won't need for effvit
         if self.num_feature_levels > len(srcs):
             _len_srcs = len(srcs)
             for l in range(_len_srcs, self.num_feature_levels):
                 if l == _len_srcs:
-                    src = self.input_proj[l](features[-1].tensors)
+                    # src = self.input_proj[l](features[-1].tensors)
+                    src = self.input_proj[l](effvit_features[-1])
                 else:
                     src = self.input_proj[l](srcs[-1])
                 m = samples.mask
