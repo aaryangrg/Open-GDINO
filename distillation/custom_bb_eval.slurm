@@ -5,7 +5,7 @@
 #SBATCH --gres=gpu:1   # And two GPU
 #SBATCH --cpus-per-task=8           # Two cores per task
 #SBATCH --job-name=DBEval
-#SBATCH --constraint=gmem16
+#SBATCH --constraint=gmem11
 
 source /home/aaryang/anaconda3/bin/activate
 conda activate opdino
