@@ -211,23 +211,23 @@ class GroundingDINO(nn.Module):
         self._reset_parameters()
 
         # Initializing custom trained backbone for feature use
-        # effvit_backbone = flexible_efficientvit_backbone_swin_t_224_1k()
-        # weight = load_state_dict_from_file("/home/aaryang/experiments/Open-GDINO/experiments/effvit/backbone_train_final/checkpoint/model_best.pt")
-        # print(weight)
-        # print()
-        # from collections import OrderedDict
-        # new_state_dict = OrderedDict()
-        # for k, v in weight.items():
-        #     if "module." in k :
-        #         name = k[7:]  # Remove "module." (from data-parallel training)
-        #         new_state_dict[name] = v
-        #     else :
-        #         new_state_dict[k] = v
-        # print(new_state_dict)
-        # effvit_backbone.load_state_dict(new_state_dict)
-        # effvit_backbone.to("cuda")
-        # self.effvit_backbone = effvit_backbone
-        # print("Effvit Backbone loaded correctly")
+        effvit_backbone = flexible_efficientvit_backbone_swin_t_224_1k()
+        weight = load_state_dict_from_file("/home/aaryang/experiments/Open-GDINO/experiments/effvit/backbone_train_final/checkpoint/model_best.pt")
+        print(weight)
+        print()
+        from collections import OrderedDict
+        new_state_dict = OrderedDict()
+        for k, v in weight.items():
+            if "module." in k :
+                name = k[7:]  # Remove "module." (from data-parallel training)
+                new_state_dict[name] = v
+            else :
+                new_state_dict[k] = v
+        print(new_state_dict)
+        effvit_backbone.load_state_dict(new_state_dict)
+        effvit_backbone.to("cuda")
+        self.effvit_backbone = effvit_backbone
+        print("Effvit Backbone loaded correctly")
 
     def _reset_parameters(self):
         # init input_proj
@@ -323,13 +323,13 @@ class GroundingDINO(nn.Module):
         print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
         features, poss = self.backbone(samples)
 
-        # effvit_features = self.effvit_backbone(samples.tensors)
+        effvit_features = self.effvit_backbone(samples.tensors)
         srcs = []
         masks = []
         for l, feat in enumerate(features):
             src, mask = feat.decompose()
-            srcs.append(self.input_proj[l](src))
-            # srcs.append(self.input_proj[l](effvit_features[l]))
+            # srcs.append(self.input_proj[l](src))
+            srcs.append(self.input_proj[l](effvit_features[l]))
             masks.append(mask)
             assert mask is not None
         # Generating additional features --> won't need for effvit
@@ -337,8 +337,8 @@ class GroundingDINO(nn.Module):
             _len_srcs = len(srcs)
             for l in range(_len_srcs, self.num_feature_levels):
                 if l == _len_srcs:
-                    src = self.input_proj[l](features[-1].tensors)
-                    # src = self.input_proj[l](effvit_features[-1])
+                    # src = self.input_proj[l](features[-1].tensors)
+                    src = self.input_proj[l](effvit_features[-1])
                 else:
                     src = self.input_proj[l](srcs[-1])
                 m = samples.mask
@@ -350,8 +350,8 @@ class GroundingDINO(nn.Module):
         input_query_bbox = input_query_label = attn_mask = dn_meta = None
 
         # FEATURE ENHANCER + QUERY SELECTION (Encoder + Decoder respectively)
-        macs,params = profile(self.transformer,(srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
-        print(f"Encoder + Decoder : MACS : {macs} || Params : {params} ")
+        # macs,params = profile(self.transformer,(srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
+        # print(f"Encoder + Decoder : MACS : {macs} || Params : {params} ")
         hs, reference, hs_enc, ref_enc, init_box_proposal = self.transformer(
             srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict
         )
