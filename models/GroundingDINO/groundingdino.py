@@ -323,7 +323,7 @@ class GroundingDINO(nn.Module):
         print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
         features, poss = self.backbone(samples)
 
-        effvit_features = self.effvit_backbone(samples.tensors)
+        # effvit_features = self.effvit_backbone(samples.tensors)
         srcs = []
         masks = []
         for l, feat in enumerate(features):

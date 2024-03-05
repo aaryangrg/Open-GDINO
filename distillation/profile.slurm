@@ -21,4 +21,4 @@ python3 ../main.py \
     --output_dir ../results/profile/pretrained_swint/ \
     --datasets ../config/coco_od_datasets.json \
     --eval \
-    --eval_batch 10
+    --eval_batch 1
