@@ -213,13 +213,10 @@ class GroundingDINO(nn.Module):
         # Initializing custom trained backbone for feature use
         effvit_backbone = flexible_efficientvit_backbone_swin_t_224_1k()
         weight = load_state_dict_from_file("/home/aaryang/experiments/Open-GDINO/experiments/effvit/backbone_train_final/checkpoint/model_best.pt")
-        print(weight)
-        print()
         from collections import OrderedDict
         new_state_dict = OrderedDict()
         for k, v in weight.items():
             new_state_dict[k] = v
-        print(new_state_dict)
         effvit_backbone.load_state_dict(new_state_dict)
         effvit_backbone.to("cuda")
         self.effvit_backbone = effvit_backbone
