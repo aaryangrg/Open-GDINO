@@ -224,6 +224,8 @@ class GroundingDINO(nn.Module):
         effvit_backbone.to("cuda")
         self.effvit_backbone = effvit_backbone
         self.effvit_backbone.eval()
+        # Set default width multiplier --> 1.0 (trained so far @ this)
+        self.effvit_backbone.apply(lambda m: setattr(m, 'width_mult', 1.0))
         print("Effvit Backbone loaded correctly")
 
     def _reset_parameters(self):
