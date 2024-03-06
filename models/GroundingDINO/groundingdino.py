@@ -218,15 +218,12 @@ class GroundingDINO(nn.Module):
         from collections import OrderedDict
         new_state_dict = OrderedDict()
         for k, v in weight.items():
-            if "module." in k :
-                name = k[7:]  # Remove "module." (from data-parallel training)
-                new_state_dict[name] = v
-            else :
-                new_state_dict[k] = v
+            new_state_dict[k] = v
         print(new_state_dict)
         effvit_backbone.load_state_dict(new_state_dict)
         effvit_backbone.to("cuda")
         self.effvit_backbone = effvit_backbone
+        self.effvit_backbone.eval()
         print("Effvit Backbone loaded correctly")
 
     def _reset_parameters(self):
