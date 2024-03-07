@@ -14,9 +14,9 @@ def get_coco_api_from_dataset(dataset):
         return dataset.coco
 
 
-def bbuild_dataset(image_set, args, datasetinfo):
+def bbuild_dataset(image_set, args, datasetinfo, custom_val_transforms = None, custom_transform_res = None):
     if datasetinfo["dataset_mode"] == 'coco':
-        return build_coco(image_set, args, datasetinfo)
+        return build_coco(image_set, args, datasetinfo, custom_val_transforms, custom_transform_res)
     if datasetinfo["dataset_mode"] == 'odvg':
         from .odvg import build_odvg
         return build_odvg(image_set, args, datasetinfo)

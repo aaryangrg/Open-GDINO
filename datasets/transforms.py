@@ -77,16 +77,16 @@ def hflip(image, target):
 def resize(image, target, size, max_size=None):
     # size can be min_size (scalar) or (w, h) tuple
 
-    # def get_size_with_aspect_ratio_force(image_size, size) :
-    #     w,h = image_size
-    #     if w < h :
-    #         new_w = size
-    #         new_h = size * ( h // w)
-    #         return (new_h, new_w)
-    #     else :
-    #         new_h = size
-    #         new_w = size * (w // h)
-    #         return (new_h, new_w)
+    def get_size_with_aspect_ratio_force(image_size, size) :
+        w,h = image_size
+        if w < h :
+            new_w = size
+            new_h = size * ( h // w)
+            return (new_h, new_w)
+        else :
+            new_h = size
+            new_w = size * (w // h)
+            return (new_h, new_w)
 
     def get_size_with_aspect_ratio(image_size, size, max_size=None):
         w, h = image_size
@@ -114,6 +114,54 @@ def resize(image, target, size, max_size=None):
         else:
             # return get_size_with_aspect_ratio(image_size, size, max_size)
             return get_size_with_aspect_ratio(image_size, size)
+
+    size = get_size(image.size, size, max_size)
+    rescaled_image = F.resize(image, size)
+
+    if target is None:
+        return rescaled_image, None
+
+    ratios = tuple(float(s) / float(s_orig) for s, s_orig in zip(rescaled_image.size, image.size))
+    ratio_width, ratio_height = ratios
+
+    target = target.copy()
+    if "boxes" in target:
+        boxes = target["boxes"]
+        scaled_boxes = boxes * torch.as_tensor([ratio_width, ratio_height, ratio_width, ratio_height])
+        target["boxes"] = scaled_boxes
+
+    if "area" in target:
+        area = target["area"]
+        scaled_area = area * (ratio_width * ratio_height)
+        target["area"] = scaled_area
+
+    h, w = size
+    target["size"] = torch.tensor([h, w])
+
+    if "masks" in target:
+        target['masks'] = interpolate(
+            target['masks'][:, None].float(), size, mode="nearest")[:, 0] > 0.5
+
+    return rescaled_image, target
+
+
+def resize_custom(image, target, size, max_size=None):
+    def get_size_with_aspect_ratio_force(image_size, size) :
+        w,h = image_size
+        if w < h :
+            new_w = size
+            new_h = size * ( h // w)
+            return (new_h, new_w)
+        else :
+            new_h = size
+            new_w = size * (w // h)
+            return (new_h, new_w)
+
+    def get_size(image_size, size, max_size=None):
+        if isinstance(size, (list, tuple)):
+            return size[::-1]
+        else:
+            return get_size_with_aspect_ratio_force(image_size, size)
 
     size = get_size(image.size, size, max_size)
     rescaled_image = F.resize(image, size)
@@ -191,15 +239,9 @@ class CenterCrop(object):
     def __init__(self, size):
         self.size = size
 
-    # Crop one dimension to 320 and leave other at aspect ratio
     def __call__(self, img, target):
         image_width, image_height = img.size
-        if image_width < image_height :
-            crop_width = self.size[1]
-            crop_height = (image_height // image_width) * crop_width
-        else :
-            crop_height = self.size[1]
-            crop_width = (image_width//image_height) * crop_height
+        crop_height, crop_width = self.size
         crop_top = int(round((image_height - crop_height) / 2.))
         crop_left = int(round((image_width - crop_width) / 2.))
         return crop(img, target, (crop_top, crop_left, crop_height, crop_width))
@@ -223,7 +265,34 @@ class RandomResize(object):
 
     def __call__(self, img, target=None):
         size = random.choice(self.sizes)
+        return resize_custom(img, target, size, self.max_size)
+    
+
+class RandomResizeCustom(object) :
+    def __init__(self, sizes, max_size=None):
+        assert isinstance(sizes, (list, tuple))
+        self.sizes = sizes
+        self.max_size = max_size
+
+    def __call__(self, img, target=None):
+        size = random.choice(self.sizes)
         return resize(img, target, size, self.max_size)
+    
+class CenterCropCustom(object):
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, img, target):
+        image_width, image_height = img.size
+        if image_width < image_height :
+            crop_width = self.size[0]
+            crop_height = (image_height // image_width) * crop_width
+        else :
+            crop_height = self.size[0]
+            crop_width = (image_width//image_height) * crop_height
+        crop_top = int(round((image_height - crop_height) / 2.))
+        crop_left = int(round((image_width - crop_width) / 2.))
+        return crop(img, target, (crop_top, crop_left, crop_height, crop_width))
 
 
 class RandomPad(object):

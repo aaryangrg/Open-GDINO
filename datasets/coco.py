@@ -460,7 +460,7 @@ class ConvertCocoPolysToMask(object):
         return image, target
 
 
-def make_coco_transforms(image_set, fix_size=False, strong_aug=False, args=None):
+def make_coco_transforms(image_set, fix_size=False, strong_aug=False, args=None, custom_val_transforms = None, custom_res = None):
 
     normalize = T.Compose([
         T.ToTensor(),
@@ -549,25 +549,25 @@ def make_coco_transforms(image_set, fix_size=False, strong_aug=False, args=None)
                 normalize,
             ])   
 
-        return T.Compose([
-            T.RandomResize([max(scales)], max_size=max_size),
-            normalize,
-        ])
+        if not custom_val_transforms : # Original transforms
+            return T.Compose([
+                T.RandomResize([max(scales)], max_size=max_size),
+                normalize,
+            ])
+        elif custom_val_transforms == "crop" :
+            #[480]
+            return T.Compose([
+                T.CenterCropCustom(custom_res),
+                normalize
+            ])
+        else : 
+            #[480]
+            return T.Compose([
+                T.RandomResizeCustom(custom_res, max_size=max_size),
+                normalize,
+            ])
 
-        # 480 x 360 roughly --> testing model performance
-        # return T.Compose([
-        #     T.RandomResize([(320,240)]),
-        #     normalize,
-        # ])
-        # return T.Compose([
-        #     T.RandomResize([480], max_size=max_size),
-        #     normalize,
-        # ])
-
-        # return T.Compose([
-        #     T.CenterCrop([0,360]),
-        #     normalize
-        # ])
+        
 
     raise ValueError(f'unknown {image_set}')
 
@@ -630,7 +630,7 @@ def get_aux_target_hacks_list(image_set, args):
     return aux_target_hacks_list
 
 
-def build(image_set, args, datasetinfo):
+def build(image_set, args, datasetinfo, custom_val_transforms = None, custom_transform_res = None):
     img_folder = datasetinfo["root"]
     ann_file = datasetinfo["anno"]
 
@@ -644,7 +644,7 @@ def build(image_set, args, datasetinfo):
         strong_aug = False
     print(img_folder, ann_file)
     dataset = CocoDetection(img_folder, ann_file, 
-            transforms=make_coco_transforms(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args), 
+            transforms=make_coco_transforms(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args, custom_val_transforms = custom_val_transforms, custom_res= custom_transform_res), 
             return_masks=args.masks,
             aux_target_hacks=None,
         )

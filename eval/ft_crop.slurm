@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --account=group3
-#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/eval/pretrained_swint_360_crop_aspect.out
+#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/eval/ft_swint_crop_320_lowered_iou.out
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1   # And two GPU
 #SBATCH --cpus-per-task=8           # Two cores per task
-#SBATCH --job-name=360FTP
+#SBATCH --job-name=FTCrop
 #SBATCH --constraint=gmem16
 
 source /home/aaryang/anaconda3/bin/activate
@@ -15,10 +15,12 @@ export TOKENIZERS_PARALLELISM=false
 
 nvidia-smi
 
-python3 ../main.py \
+python3 ../custom_eval.py \
     --config_file ../config/cfg_coco.py \
-    --pretrain_model_path ../weights/groundingdino_swint_ogc.pth \
-    --output_dir ../results/eval/pretrained_swint_360_crop_aspect/ \
+    --pretrain_model_path ../weights/gdinot-coco-ft.pth \
+    --output_dir ../results/eval/ft_swint_crop_320_lowered_iou/ \
     --datasets ../config/coco_od_datasets.json \
     --eval \
-    --eval_batch 10
+    --eval_batch 10 \
+    --custom_transform crop \
+    --custom_res 320
