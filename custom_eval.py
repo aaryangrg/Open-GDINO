@@ -190,7 +190,7 @@ def main(args):
         logger.debug(f'number of training dataset: {num_of_dataset_train}, samples: {len(dataset_train)}')
 
     # Creating custom transform and res for validation (script configurable)
-    dataset_val = bbuild_dataset(image_set='val', args=args, datasetinfo=dataset_meta["val"][0], custom_val_transforms=args.custom_transform, custom_transform_res=args.custom_res)
+    dataset_val = bbuild_dataset(image_set='val', args=args, datasetinfo=dataset_meta["val"][0], custom_val_transforms=args.custom_transform, custom_transform_res= [args.custom_res,])
 
     if args.distributed:
         sampler_val = DistributedSampler(dataset_val, shuffle=False)
