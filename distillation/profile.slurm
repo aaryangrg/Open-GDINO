@@ -15,10 +15,10 @@ export TOKENIZERS_PARALLELISM=false
 
 nvidia-smi
 
-python3 ../main.py \
+python3 ../custom_eval.py \
     --config_file ../config/cfg_coco.py \
     --pretrain_model_path ../weights/groundingdino_swint_ogc.pth \
     --output_dir ../results/profile/pretrained_swint/ \
     --datasets ../config/coco_od_datasets.json \
     --eval \
-    --eval_batch 10
+    --eval_batch 10 \
