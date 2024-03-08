@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=group3
-#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/profile/pretrained_swint_backbone.out
+#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/profile/swin_t.out
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1   # And two GPU
 #SBATCH --cpus-per-task=8           # Two cores per task
@@ -21,4 +21,4 @@ python3 ../main.py \
     --output_dir ../results/profile/pretrained_swint/ \
     --datasets ../config/coco_od_datasets.json \
     --eval \
-    --eval_batch 1
+    --eval_batch 10

@@ -71,6 +71,7 @@ def get_args_parser():
                         help="Train with mixed precision")
     parser.add_argument("--eval_batch", type = int, default = 4)
     parser.add_argument("--distributed", type = bool, default = False)
+    parser.add_argument("--profile", type = bool, default = False)
     return parser
 
 
@@ -188,6 +189,13 @@ def main(args):
         logger.debug(f'number of training dataset: {num_of_dataset_train}, samples: {len(dataset_train)}')
 
     dataset_val = bbuild_dataset(image_set='val', args=args, datasetinfo=dataset_meta["val"][0])
+    # images = []
+    # if args.profile :
+    #     total_step = 20
+    #     for idx in range(total_step):
+    #         img, t = dataset_val[idx]
+    #         images.append(img)
+    
 
     if args.distributed:
         sampler_val = DistributedSampler(dataset_val, shuffle=False)
@@ -260,7 +268,10 @@ def main(args):
         _load_output = model_without_ddp.load_state_dict(_tmp_st, strict=False)
         logger.info(str(_load_output))
 
- 
+    
+    # if args.profile :
+    #     for i in range(len(images)) :
+    #         model(images[i])
     
     if args.eval:
         os.environ['EVAL_FLAG'] = 'TRUE'

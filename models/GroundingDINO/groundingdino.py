@@ -18,6 +18,7 @@ import copy
 from lib2to3.pgen2 import token
 from typing import List
 
+
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -50,6 +51,7 @@ from .transformer import build_transformer
 from .utils import MLP, ContrastiveEmbed, sigmoid_focal_loss
 
 from .matcher import build_matcher
+from benchmark_segments import flop_count
 import sys 
 
 # sys.path.append('/home/aaryang/experiments/Open-GDINO/effvit')
@@ -288,7 +290,11 @@ class GroundingDINO(nn.Module):
         # BERT CALL
         # macs,params = profile(self.bert,(**tokenized_for_encoder,))
         # print(f"BERT : MACS : {macs} || Params : {params} ")
+            
         bert_output = self.bert(**tokenized_for_encoder)  # bs, 195, 768
+        bert_flops = flop_count(self.bert, (tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
+        bert_flops = sum(bert_flops.values())
+        print("BERT FLOPS  : ", bert_flops)
 
         encoded_text = self.feat_map(bert_output["last_hidden_state"])  # bs, 195, d_model
         text_token_mask = tokenized.attention_mask.bool()  # bs, 195
@@ -317,7 +323,11 @@ class GroundingDINO(nn.Module):
         # IMAGE BACKBONE CALL
         # macs,params = profile(self.backbone,(samples,))
         # print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
+            
         features, poss = self.backbone(samples)
+        img_backbone_flops = flop_count(self.backbone, (samples,))
+        img_backbone_flops = sum(img_backbone_flops.values())
+        print("BACKBONE : ", img_backbone_flops)
 
         # effvit_features = self.effvit_backbone(samples.tensors)
         # effvit_features = effvit_features[1:] # Initial features contain extra smaller channels
@@ -352,6 +362,10 @@ class GroundingDINO(nn.Module):
         hs, reference, hs_enc, ref_enc, init_box_proposal = self.transformer(
             srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict
         )
+
+        feature_enhancer_flops = flop_count(self.transformer, (srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
+        feature_enhancer_flops = sum(feature_enhancer_flops.values())
+        print("FEATURE ENHANCER : ", feature_enhancer_flops)
 
         
         # FINAL PREDICTION & BBOX REFINEMENT LAYERS
