@@ -253,7 +253,7 @@ class RandomResize(object):
 
     def __call__(self, img, target=None):
         size = random.choice(self.sizes)
-        return resize_custom(img, target, size, self.max_size)
+        return resize(img, target, size, self.max_size)
     
 
 class RandomResizeCustom(object) :
