@@ -7,7 +7,7 @@ import math
 import os
 import sys
 from typing import Iterable
-from benchmark_segments import flop_count
+
 
 from util.utils import to_device
 import torch
@@ -18,6 +18,7 @@ from datasets.coco_eval import CocoEvaluator
 from datasets.cocogrounding_eval import CocoGroundingEvaluator
 
 from datasets.panoptic_eval import PanopticEvaluator
+from benchmark_segments import flop_count
 
 def get_kld_loss(scale_pred, scale_soft, temperature = 1.0):
         p_s = F.log_softmax(scale_pred / temperature, dim=1)
