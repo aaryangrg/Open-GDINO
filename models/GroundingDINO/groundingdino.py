@@ -292,9 +292,9 @@ class GroundingDINO(nn.Module):
         # print(f"BERT : MACS : {macs} || Params : {params} ")
             
         bert_output = self.bert(**tokenized_for_encoder)  # bs, 195, 768
-        bert_flops = flop_count(self.bert, (tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
-        bert_flops = sum(bert_flops.values())
-        print("BERT FLOPS  : ", bert_flops)
+        # bert_flops = flop_count(self.bert, (tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
+        # bert_flops = sum(bert_flops.values())
+        # print("BERT FLOPS  : ", bert_flops)
 
         encoded_text = self.feat_map(bert_output["last_hidden_state"])  # bs, 195, d_model
         text_token_mask = tokenized.attention_mask.bool()  # bs, 195
@@ -364,9 +364,9 @@ class GroundingDINO(nn.Module):
             srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict
         )
 
-        feature_enhancer_flops = flop_count(self.transformer, (srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
-        feature_enhancer_flops = sum(feature_enhancer_flops.values())
-        print("FEATURE ENHANCER : ", feature_enhancer_flops)
+        # feature_enhancer_flops = flop_count(self.transformer, (srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
+        # feature_enhancer_flops = sum(feature_enhancer_flops.values())
+        # print("FEATURE ENHANCER : ", feature_enhancer_flops)
 
         
         # FINAL PREDICTION & BBOX REFINEMENT LAYERS

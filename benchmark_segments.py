@@ -607,7 +607,7 @@ def flop_count(
     return final_count
 
 
-def get_dataset(coco_path):
+def get_dataset(main_args):
     """
     Gets the COCO dataset used for computing the flops on
     """
@@ -616,10 +616,9 @@ def get_dataset(coco_path):
         pass
 
     args = DummyArgs()
-    args.dataset_file = "coco"
-    args.coco_path = coco_path
-    args.masks = False
-    dataset = bbuild_dataset(image_set="val", args=args, custom_val_transforms="resize", custom_transform_res=[args.custom_res])
+    anno_path = None
+    root_path = None
+    dataset = bbuild_dataset(image_set="val", args=main_args, datasetinfo={"root" : anno_path, "anno" : anno_path} ,custom_val_transforms="resize", custom_transform_res=[480])
     return dataset
 
 
@@ -693,17 +692,16 @@ def benchmark():
             inputs = [img.to("cuda")]
             res = flop_count(model, (inputs,))
             tmp.append(sum(res.values()))
-            
-            # t = measure_time(model, inputs)
-            # if imgid >= warmup_step:
-            #     tmp2.append(t)
+            t = measure_time(model, inputs)
+            if imgid >= warmup_step:
+                tmp2.append(t)
 
     _outputs.update({"detailed_flops": res})
-    # _outputs.update({"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))})
+    _outputs.update({"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))})
     _outputs.update({"flops": fmt_res(np.array(tmp))})
 
-    # mean_infer_time = float(fmt_res(np.array(tmp2))["mean"])
-    # _outputs.update({"fps": 1 / mean_infer_time})
+    mean_infer_time = float(fmt_res(np.array(tmp2))["mean"])
+    _outputs.update({"fps": 1 / mean_infer_time})
 
     res = {"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))}
     # print(res)
