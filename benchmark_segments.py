@@ -32,53 +32,15 @@ import torch.nn as nn
 from functools import partial
 import time
 import torch.nn.functional as F
-from util.slconfig import SLConfig
+# from util.slconfig import SLConfig
 
 from typing import Any, Callable, List, Optional, Union
 from numbers import Number
 
 Handle = Callable[[List[Any], List[Any]], Union[typing.Counter[str], Number]]
 
-from main import build_model_main, get_args_parser as get_main_args_parser
-from datasets import bbuild_dataset
-
-
-def forward_raw(model, x):
-    """Forward function."""
-    x = model.patch_embed(x)
-
-    Wh, Ww = x.size(2), x.size(3)
-    if model.ape:
-        # interpolate the position embedding to the corresponding size
-        absolute_pos_embed = F.interpolate(
-            model.absolute_pos_embed, size=(Wh, Ww), mode="bicubic"
-        )
-        x = (x + absolute_pos_embed).flatten(2).transpose(1, 2)  # B Wh*Ww C
-    else:
-        x = x.flatten(2).transpose(1, 2) # B Wh*Ww C
-    x = model.pos_drop(x)
-
-    outs = []
-    for i in range(model.num_layers):
-        layer = model.layers[i]
-        # x, Wh, Ww --> new dimensions || downsampled output
-        x_out, H, W, x, Wh, Ww = layer(x, Wh, Ww)
-        # import ipdb; ipdb.set_trace()
-
-        if i in model.out_indices:
-            norm_layer = getattr(model, f"norm{i}")
-            x_out = norm_layer(x_out)
-
-            out = x_out.view(-1, H, W, model.num_features[i]).permute(0, 3, 1, 2).contiguous()
-            outs.append(out)
-    # in:
-    #   torch.Size([2, 3, 1024, 1024])
-    # outs:
-    #   [torch.Size([2, 192, 256, 256]), torch.Size([2, 384, 128, 128]), \
-    #       torch.Size([2, 768, 64, 64]), torch.Size([2, 1536, 32, 32])]
-            
-    return tuple(outs)
-
+# from main import build_model_main, get_args_parser as get_main_args_parser
+# from datasets import bbuild_dataset
 
 def get_shape(val: object) -> typing.List[int]:
     """
@@ -607,112 +569,112 @@ def flop_count(
     return final_count
 
 
-def get_dataset(main_args):
-    """
-    Gets the COCO dataset used for computing the flops on
-    """
+# def get_dataset(main_args):
+#     """
+#     Gets the COCO dataset used for computing the flops on
+#     """
 
-    class DummyArgs:
-        pass
+#     class DummyArgs:
+#         pass
 
-    args = DummyArgs()
-    anno_path = None
-    root_path = None
-    dataset = bbuild_dataset(image_set="val", args=main_args, datasetinfo={"root" : anno_path, "anno" : anno_path} ,custom_val_transforms="resize", custom_transform_res=[480])
-    return dataset
-
-
-def warmup(model, inputs, N=10):
-    for i in range(N):
-        out = model(inputs)
-    torch.cuda.synchronize()
+#     args = DummyArgs()
+#     anno_path = None
+#     root_path = None
+#     dataset = bbuild_dataset(image_set="val", args=main_args, datasetinfo={"root" : anno_path, "anno" : anno_path} ,custom_val_transforms="resize", custom_transform_res=[480])
+#     return dataset
 
 
-def measure_time(model, inputs, N=10):
-    warmup(model, inputs)
-    s = time.time()
-    for i in range(N):
-        out = model(inputs)
-    torch.cuda.synchronize()
-    t = (time.time() - s) / N
-    return t
+# def warmup(model, inputs, N=10):
+#     for i in range(N):
+#         out = model(inputs)
+#     torch.cuda.synchronize()
 
 
-def fmt_res(data):
-    # return data.mean(), data.std(), data.min(), data.max()
-    return {
-        "mean": data.mean(),
-        "std": data.std(),
-        "min": data.min(),
-        "max": data.max(),
-    }
+# def measure_time(model, inputs, N=10):
+#     warmup(model, inputs)
+#     s = time.time()
+#     for i in range(N):
+#         out = model(inputs)
+#     torch.cuda.synchronize()
+#     t = (time.time() - s) / N
+#     return t
 
 
-def benchmark():
-    _outputs = {}
-    main_args = get_main_args_parser().parse_args()
-    main_args.commad_txt = "Command: " + " ".join(sys.argv)
+# def fmt_res(data):
+#     # return data.mean(), data.std(), data.min(), data.max()
+#     return {
+#         "mean": data.mean(),
+#         "std": data.std(),
+#         "min": data.min(),
+#         "max": data.max(),
+#     }
 
-    # load cfg file and update the args
-    print("Loading config file from {}".format(main_args.config_file))
-    cfg = SLConfig.fromfile(main_args.config_file)
-    if main_args.options is not None:
-        cfg.merge_from_dict(main_args.options)
-    cfg_dict = cfg._cfg_dict.to_dict()
-    args_vars = vars(main_args)
-    for k, v in cfg_dict.items():
-        if k not in args_vars:
-            setattr(main_args, k, v)
-        else:
-            raise ValueError("Key {} can used by args only".format(k))
 
-    dataset = get_dataset(main_args)
-    model, _, _ = build_model_main(main_args)
-    n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    _outputs.update({"nparam": n_parameters})
+# def benchmark():
+#     _outputs = {}
+#     main_args = get_main_args_parser().parse_args()
+#     main_args.commad_txt = "Command: " + " ".join(sys.argv)
 
-    model.cuda()
-    model.eval()
+#     # load cfg file and update the args
+#     print("Loading config file from {}".format(main_args.config_file))
+#     cfg = SLConfig.fromfile(main_args.config_file)
+#     if main_args.options is not None:
+#         cfg.merge_from_dict(main_args.options)
+#     cfg_dict = cfg._cfg_dict.to_dict()
+#     args_vars = vars(main_args)
+#     for k, v in cfg_dict.items():
+#         if k not in args_vars:
+#             setattr(main_args, k, v)
+#         else:
+#             raise ValueError("Key {} can used by args only".format(k))
 
-    warmup_step = 5
-    total_step = 20
+#     dataset = get_dataset(main_args)
+#     model, _, _ = build_model_main(main_args)
+#     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+#     _outputs.update({"nparam": n_parameters})
 
-    # 25 batches (25 images)
-    images = []
-    for idx in range(total_step):
-        img, t = dataset[idx]
-        images.append(img)
+#     model.cuda()
+#     model.eval()
+
+#     warmup_step = 5
+#     total_step = 20
+
+#     # 25 batches (25 images)
+#     images = []
+#     for idx in range(total_step):
+#         img, t = dataset[idx]
+#         images.append(img)
     
 
-    # Run FLOPs calculation for individual model parts (copying the forward function)
-    with torch.no_grad():
-        tmp = []
-        tmp2 = []
-        for imgid, img in enumerate(tqdm.tqdm(images)):
-            inputs = [img.to("cuda")]
-            res = flop_count(model, (inputs,))
-            tmp.append(sum(res.values()))
-            t = measure_time(model, inputs)
-            if imgid >= warmup_step:
-                tmp2.append(t)
+#     # Run FLOPs calculation for individual model parts (copying the forward function)
+#     with torch.no_grad():
+#         tmp = []
+#         tmp2 = []
+#         for imgid, img in enumerate(tqdm.tqdm(images)):
+#             inputs = [img.to("cuda")]
+#             res = flop_count(model, (inputs,))
+#             tmp.append(sum(res.values()))
+#             t = measure_time(model, inputs)
+#             if imgid >= warmup_step:
+#                 tmp2.append(t)
 
-    _outputs.update({"detailed_flops": res})
-    _outputs.update({"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))})
-    _outputs.update({"flops": fmt_res(np.array(tmp))})
+#     _outputs.update({"detailed_flops": res})
+#     _outputs.update({"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))})
+#     _outputs.update({"flops": fmt_res(np.array(tmp))})
 
-    mean_infer_time = float(fmt_res(np.array(tmp2))["mean"])
-    _outputs.update({"fps": 1 / mean_infer_time})
+#     mean_infer_time = float(fmt_res(np.array(tmp2))["mean"])
+#     _outputs.update({"fps": 1 / mean_infer_time})
 
-    res = {"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))}
-    # print(res)
+#     res = {"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))}
+#     # print(res)
 
-    output_file = os.path.join(main_args.output_dir, "flops", "log.txt")
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    with open(output_file, "a") as f:
-        f.write(main_args.commad_txt + "\n")
-        f.write(json.dumps(_outputs, indent=2) + "\n")
+#     output_file = os.path.join(main_args.output_dir, "flops", "log.txt")
+#     os.makedirs(os.path.dirname(output_file), exist_ok=True)
+#     with open(output_file, "a") as f:
+#         f.write(main_args.commad_txt + "\n")
+#         f.write(json.dumps(_outputs, indent=2) + "\n")
 
-    return _outputs
+#     return _outputs
 
 
 if __name__ == "__main__":
