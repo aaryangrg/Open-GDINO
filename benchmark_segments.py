@@ -525,14 +525,14 @@ def flop_count(
     # Compatibility with torch.jit.
     if hasattr(torch.jit, "get_trace_graph"):
         if is_image_backbone :
-            trace, _ = torch.jit.get_trace_graph(model.forward_raw, inputs)
+            trace, _ = torch.jit.get_trace_graph(model.forward_raw(), inputs)
         else: 
             trace, _ = torch.jit.get_trace_graph(model, inputs)
         trace_nodes = trace.graph().nodes()
         
     else:
         if is_image_backbone :
-            trace, _ = torch.jit._get_trace_graph(model.forward_raw, inputs)
+            trace, _ = torch.jit._get_trace_graph(model.forward_raw(), inputs)
         else: 
             trace, _ = torch.jit._get_trace_graph(model, inputs)
         trace_nodes = trace.nodes()
