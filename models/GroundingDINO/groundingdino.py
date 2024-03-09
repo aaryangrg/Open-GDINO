@@ -288,8 +288,8 @@ class GroundingDINO(nn.Module):
             tokenized_for_encoder = tokenized
 
         # BERT CALL
-        # macs,params = profile(self.bert,(**tokenized_for_encoder,))
-        # print(f"BERT : MACS : {macs} || Params : {params} ")
+        macs,params = profile(self.bert,(tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
+        print(f"BERT : MACS : {macs} || Params : {params} ")
             
         bert_output = self.bert(**tokenized_for_encoder)  # bs, 195, 768
         # bert_flops = flop_count(self.bert, (tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
@@ -321,8 +321,8 @@ class GroundingDINO(nn.Module):
             samples = nested_tensor_from_tensor_list(samples)
 
         # IMAGE BACKBONE CALL
-        # macs,params = profile(self.backbone,(samples,))
-        # print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
+        macs,params = profile(self.backbone,(samples,))
+        print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
             
         features, poss = self.backbone(samples)
         # first_layer_model = nn.Sequential(*list(self.backbone.children())[:1])
@@ -358,8 +358,8 @@ class GroundingDINO(nn.Module):
         input_query_bbox = input_query_label = attn_mask = dn_meta = None
 
         # FEATURE ENHANCER + QUERY SELECTION (Encoder + Decoder respectively)
-        # macs,params = profile(self.transformer,(srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
-        # print(f"Encoder + Decoder : MACS : {macs} || Params : {params} ")
+        macs,params = profile(self.transformer,(srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
+        print(f"Encoder + Decoder : MACS : {macs} || Params : {params} ")
         hs, reference, hs_enc, ref_enc, init_box_proposal = self.transformer(
             srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict
         )
