@@ -51,7 +51,7 @@ from .transformer import build_transformer
 from .utils import MLP, ContrastiveEmbed, sigmoid_focal_loss
 
 from .matcher import build_matcher
-from benchmark_segments import flop_count, forward_raw
+from benchmark_segments import flop_count
 import sys 
 
 # sys.path.append('/home/aaryang/experiments/Open-GDINO/effvit')
