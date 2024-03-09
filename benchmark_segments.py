@@ -532,9 +532,9 @@ def flop_count(
         
     else:
         if is_image_backbone :
-            trace, _ = torch.jit.get_trace_graph(model.raw_forward, inputs)
+            trace, _ = torch.jit._get_trace_graph(model.raw_forward, inputs)
         else: 
-            trace, _ = torch.jit.get_trace_graph(model, inputs)
+            trace, _ = torch.jit._get_trace_graph(model, inputs)
         trace_nodes = trace.nodes()
 
     skipped_ops = Counter()
