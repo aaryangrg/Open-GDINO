@@ -709,6 +709,7 @@ class SwinTransformer(nn.Module):
         # outs:
         #   [torch.Size([2, 192, 256, 256]), torch.Size([2, 384, 128, 128]), \
         #       torch.Size([2, 768, 64, 64]), torch.Size([2, 1536, 32, 32])]
+                
         return tuple(outs)
 
     def forward(self, tensor_list: NestedTensor):

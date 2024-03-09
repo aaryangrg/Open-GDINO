@@ -478,6 +478,7 @@ def flop_count(
     inputs: typing.Tuple[object, ...],
     whitelist: typing.Union[typing.List[str], None] = None,
     customized_ops: typing.Union[typing.Dict[str, typing.Callable], None] = None,
+    is_image_backbone = False
 ) -> typing.DefaultDict[str, float]:
     """
     Given a model and an input to the model, compute the Gflops of the given
@@ -523,10 +524,17 @@ def flop_count(
 
     # Compatibility with torch.jit.
     if hasattr(torch.jit, "get_trace_graph"):
-        trace, _ = torch.jit.get_trace_graph(model, inputs)
+        if is_image_backbone :
+            trace, _ = torch.jit.get_trace_graph(model.raw_forward, inputs)
+        else: 
+            trace, _ = torch.jit.get_trace_graph(model, inputs)
         trace_nodes = trace.graph().nodes()
+        
     else:
-        trace, _ = torch.jit._get_trace_graph(model, inputs)
+        if is_image_backbone :
+            trace, _ = torch.jit.get_trace_graph(model.raw_forward, inputs)
+        else: 
+            trace, _ = torch.jit.get_trace_graph(model, inputs)
         trace_nodes = trace.nodes()
 
     skipped_ops = Counter()
