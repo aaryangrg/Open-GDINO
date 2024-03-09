@@ -145,8 +145,8 @@ class Backbone(BackboneBase):
 
 class Joiner(nn.Sequential):
     def __init__(self, backbone, position_embedding):
-        self.backbone = backbone
         super().__init__(backbone, position_embedding)
+        self.backbone = backbone
 
     def forward(self, tensor_list: NestedTensor):
         xs = self[0](tensor_list)
