@@ -326,9 +326,9 @@ class GroundingDINO(nn.Module):
             
         features, poss = self.backbone(samples)
         # first_layer_model = nn.Sequential(*list(self.backbone.children())[:1])
-        img_backbone_flops = flop_count(forward_raw, (self.backbone.backbone,samples.tensors,), is_image_backbone=True)
-        img_backbone_flops = sum(img_backbone_flops.values())
-        print("BACKBONE : ", img_backbone_flops)
+        # img_backbone_flops = flop_count(forward_raw, (self.backbone.backbone,samples.tensors,), is_image_backbone=True)
+        # img_backbone_flops = sum(img_backbone_flops.values())
+        # print("BACKBONE : ", img_backbone_flops)
 
         # effvit_features = self.effvit_backbone(samples.tensors)
         # effvit_features = effvit_features[1:] # Initial features contain extra smaller channels
