@@ -31,7 +31,7 @@ import torch
 import torch.nn as nn
 from functools import partial
 import time
-
+import torch.nn.functional as F
 from util.slconfig import SLConfig
 
 from typing import Any, Callable, List, Optional, Union
@@ -41,6 +41,43 @@ Handle = Callable[[List[Any], List[Any]], Union[typing.Counter[str], Number]]
 
 from main import build_model_main, get_args_parser as get_main_args_parser
 from datasets import bbuild_dataset
+
+
+def forward_raw(model, x):
+    """Forward function."""
+    x = model.patch_embed(x)
+
+    Wh, Ww = x.size(2), x.size(3)
+    if model.ape:
+        # interpolate the position embedding to the corresponding size
+        absolute_pos_embed = F.interpolate(
+            model.absolute_pos_embed, size=(Wh, Ww), mode="bicubic"
+        )
+        x = (x + absolute_pos_embed).flatten(2).transpose(1, 2)  # B Wh*Ww C
+    else:
+        x = x.flatten(2).transpose(1, 2) # B Wh*Ww C
+    x = model.pos_drop(x)
+
+    outs = []
+    for i in range(model.num_layers):
+        layer = model.layers[i]
+        # x, Wh, Ww --> new dimensions || downsampled output
+        x_out, H, W, x, Wh, Ww = layer(x, Wh, Ww)
+        # import ipdb; ipdb.set_trace()
+
+        if i in model.out_indices:
+            norm_layer = getattr(model, f"norm{i}")
+            x_out = norm_layer(x_out)
+
+            out = x_out.view(-1, H, W, model.num_features[i]).permute(0, 3, 1, 2).contiguous()
+            outs.append(out)
+    # in:
+    #   torch.Size([2, 3, 1024, 1024])
+    # outs:
+    #   [torch.Size([2, 192, 256, 256]), torch.Size([2, 384, 128, 128]), \
+    #       torch.Size([2, 768, 64, 64]), torch.Size([2, 1536, 32, 32])]
+            
+    return tuple(outs)
 
 
 def get_shape(val: object) -> typing.List[int]:
@@ -474,7 +511,7 @@ _HAS_ALREADY_SKIPPED = False
 
 
 def flop_count(
-    model: nn.Module,
+    model,
     inputs: typing.Tuple[object, ...],
     whitelist: typing.Union[typing.List[str], None] = None,
     customized_ops: typing.Union[typing.Dict[str, typing.Callable], None] = None,
@@ -525,14 +562,14 @@ def flop_count(
     # Compatibility with torch.jit.
     if hasattr(torch.jit, "get_trace_graph"):
         if is_image_backbone :
-            trace, _ = torch.jit.get_trace_graph(model.forward_raw(), inputs)
+            trace, _ = torch.jit.get_trace_graph(model, inputs)
         else: 
             trace, _ = torch.jit.get_trace_graph(model, inputs)
         trace_nodes = trace.graph().nodes()
         
     else:
         if is_image_backbone :
-            trace, _ = torch.jit._get_trace_graph(model.forward_raw(), inputs)
+            trace, _ = torch.jit._get_trace_graph(model, inputs)
         else: 
             trace, _ = torch.jit._get_trace_graph(model, inputs)
         trace_nodes = trace.nodes()

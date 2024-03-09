@@ -51,7 +51,7 @@ from .transformer import build_transformer
 from .utils import MLP, ContrastiveEmbed, sigmoid_focal_loss
 
 from .matcher import build_matcher
-from benchmark_segments import flop_count
+from benchmark_segments import flop_count, forward_raw
 import sys 
 
 # sys.path.append('/home/aaryang/experiments/Open-GDINO/effvit')
@@ -326,7 +326,7 @@ class GroundingDINO(nn.Module):
             
         features, poss = self.backbone(samples)
         # first_layer_model = nn.Sequential(*list(self.backbone.children())[:1])
-        img_backbone_flops = flop_count(self.backbone.backbone, (self.backbone.backbone,samples.tensors,), is_image_backbone=True)
+        img_backbone_flops = flop_count(forward_raw, (self.backbone.backbone,samples.tensors,), is_image_backbone=True)
         img_backbone_flops = sum(img_backbone_flops.values())
         print("BACKBONE : ", img_backbone_flops)
 
