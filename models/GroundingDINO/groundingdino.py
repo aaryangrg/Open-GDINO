@@ -325,7 +325,7 @@ class GroundingDINO(nn.Module):
         # print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
             
         features, poss = self.backbone(samples)
-        img_backbone_flops = flop_count(self.backbone[0], (samples.tensors,))
+        img_backbone_flops = flop_count(self.backbone[0], (samples.tensors,), is_image_backbone=True)
         img_backbone_flops = sum(img_backbone_flops.values())
         print("BACKBONE : ", img_backbone_flops)
 
