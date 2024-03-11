@@ -23,4 +23,4 @@ python3 ../custom_eval.py \
     --eval \
     --eval_batch 10 \
     --custom_transform resize \
-    --custom_res 320
+    --custom_res 480
