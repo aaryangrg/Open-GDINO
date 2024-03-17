@@ -288,8 +288,8 @@ class GroundingDINO(nn.Module):
             tokenized_for_encoder = tokenized
 
         # BERT CALL
-        # macs,params = profile(self.bert,(tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
-        # print(f"BERT : MACS : {macs} || Params : {params} ")
+        macs,params = profile(self.bert,(tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
+        print(f"BERT : MACS : {macs} || Params : {params} ")
             
         bert_output = self.bert(**tokenized_for_encoder)  # bs, 195, 768
 
@@ -318,8 +318,8 @@ class GroundingDINO(nn.Module):
             samples = nested_tensor_from_tensor_list(samples)
 
         # IMAGE BACKBONE CALL
-        # macs,params = profile(self.backbone,(samples,))
-        # print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
+        macs,params = profile(self.backbone,(samples,))
+        print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
             
         features, poss = self.backbone(samples)
 
@@ -359,7 +359,6 @@ class GroundingDINO(nn.Module):
 
         
         # FINAL PREDICTION & BBOX REFINEMENT LAYERS
-        # deformable-detr-like anchor update
         outputs_coord_list = []
         for dec_lid, (layer_ref_sig, layer_bbox_embed, layer_hs) in enumerate(
             zip(reference[:-1], self.bbox_embed, hs)

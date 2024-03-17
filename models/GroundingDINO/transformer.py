@@ -35,7 +35,7 @@ from .utils import (
     gen_sineembed_for_position,
     get_sine_pos_embed,
 )
-
+from thop import profile
 
 class Transformer(nn.Module):
     def __init__(
@@ -81,10 +81,13 @@ class Transformer(nn.Module):
         assert query_dim == 4
 
         # choose encoder layer type
+
+        # DEFORMABLE SELF-ATTENTION --> Image Features
         encoder_layer = DeformableTransformerEncoderLayer(
             d_model, dim_feedforward, dropout, activation, num_feature_levels, nhead, enc_n_points
         )
-
+        
+        # REGULAR SELF-ATTENTION --> Text features
         if use_text_enhancer:
             text_enhance_layer = TransformerEncoderLayer(
                 d_model=d_model,
@@ -95,6 +98,7 @@ class Transformer(nn.Module):
         else:
             text_enhance_layer = None
 
+        # IMAGE-TEXT AND TEXT-IMAGE CROSS ATTENTION --> generates final outputs features
         if use_fusion_layer:
             feature_fusion_layer = BiAttentionBlock(
                 v_dim=d_model,
@@ -109,6 +113,8 @@ class Transformer(nn.Module):
 
         encoder_norm = nn.LayerNorm(d_model) if normalize_before else None
         assert encoder_norm is None
+
+        # Add profiling --> can get each individual blocks features
         self.encoder = TransformerEncoder(
             encoder_layer,
             num_encoder_layers,
@@ -120,7 +126,6 @@ class Transformer(nn.Module):
             use_transformer_ckpt=use_transformer_ckpt,
         )
 
-        # choose decoder layer type
         decoder_layer = DeformableTransformerDecoderLayer(
             d_model,
             dim_feedforward,
@@ -133,6 +138,7 @@ class Transformer(nn.Module):
         )
 
         decoder_norm = nn.LayerNorm(d_model)
+        # Cross Modality Decoder
         self.decoder = TransformerDecoder(
             decoder_layer,
             num_decoder_layers,
@@ -255,6 +261,20 @@ class Transformer(nn.Module):
         #########################################################
         # Begin Encoder
         #########################################################
+
+        macs,params = profile(self.encoder,(src_flatten,
+            lvl_pos_embed_flatten,
+            level_start_index,
+            spatial_shapes,
+            valid_ratios,
+            mask_flatten,
+            text_dict["encoded_text"],
+            ~text_dict["text_token_mask"],
+            # we ~ the mask . False means use the token; True means pad the token
+            text_dict["position_ids"],
+            text_dict["text_self_attention_masks"]))
+        
+        print(f"Encoder MACS : {macs} || Params : {params} ")
         memory, memory_text = self.encoder(
             src_flatten,
             pos=lvl_pos_embed_flatten,
@@ -268,6 +288,8 @@ class Transformer(nn.Module):
             position_ids=text_dict["position_ids"],
             text_self_attention_masks=text_dict["text_self_attention_masks"],
         )
+
+
         #########################################################
         # End Encoder
         # - memory: bs, \sum{hw}, c
@@ -365,6 +387,22 @@ class Transformer(nn.Module):
         #memory  torch.Size([2, 16320, 256])
 
         # import pdb;pdb.set_trace()
+
+        macs,params = profile(self.encoder,(src_flatten,
+            tgt.transpose(0, 1),
+            memory.transpose(0, 1),
+            mask_flatten,
+            lvl_pos_embed_flatten.transpose(0, 1),
+            refpoint_embed.transpose(0, 1),
+            level_start_index,
+            spatial_shapes,
+            valid_ratios,
+            attn_mask,
+            text_dict["encoded_text"],
+            ~text_dict["text_token_mask"],
+            ))
+        
+        print(f"Decoder : {macs} || Params : {params} ")
         hs, references = self.decoder(
             tgt=tgt.transpose(0, 1),
             memory=memory.transpose(0, 1),
