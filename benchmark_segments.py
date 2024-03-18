@@ -628,7 +628,7 @@ def benchmark():
         dataset_meta = json.load(f)
     main_args.coco_val_path = dataset_meta["val"][0]["anno"]
 
-    dataset = bbuild_dataset("val", main_args, dataset_meta["val"][0])
+    dataset = bbuild_dataset("val", main_args, dataset_meta["val"][0], "resize", [1333,])
     model, _, _ = build_model_main(main_args)
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     _outputs.update({"nparam": n_parameters})
