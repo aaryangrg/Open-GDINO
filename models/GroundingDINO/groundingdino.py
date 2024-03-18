@@ -255,6 +255,7 @@ class GroundingDINO(nn.Module):
            - "aux_outputs": Optional, only returned when auxilary losses are activated. It is a list of
                             dictionnaries containing the two above keys for each decoder layer.
         """
+        samples = NestedTensor(tensors=samples_tensor, mask = samples_mask)
         if targets is None:
             captions = kw["captions"]
         else:

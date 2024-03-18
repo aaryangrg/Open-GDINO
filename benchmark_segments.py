@@ -660,7 +660,7 @@ def benchmark():
         for samples, targets in data_loader_val :
             samples = samples.to("cuda")
             input_targets = {"caption" : caption}
-            res = flop_count(model, (samples.tensor, samples.mask, input_targets))
+            res = flop_count(model, (samples.tensors, samples.mask, input_targets))
             # t = measure_time(model, (inputs, input_targets))
             tmp.append(sum(res.values()))
         # for imgid, img in enumerate(tqdm.tqdm(images)):
