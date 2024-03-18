@@ -295,8 +295,8 @@ class GroundingDINO(nn.Module):
         # BERT CALL
         # macs,params = profile(self.bert,(tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
         # print(f"BERT : MACS : {macs} || Params : {params} ")
-        flops = FlopCountAnalysis(self.bert, (tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
-        print("TOTAL BERT FLOPS (Detectron2) : ", flops.total())
+        # flops = FlopCountAnalysis(self.bert, (tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
+        # print("TOTAL BERT FLOPS (Detectron2) : ", flops.total())
 
         bert_output = self.bert(**tokenized_for_encoder)  # bs, 195, 768
 
@@ -327,9 +327,9 @@ class GroundingDINO(nn.Module):
         # IMAGE BACKBONE CALL
         # macs,params = profile(self.backbone,(samples,))
         # print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
-        flops = FlopCountAnalysis(self.backbone, (samples,))
-        flops.unsupported_ops_warnings(False).uncalled_modules_warnings(False)
-        print("IMAGE BACKBONE FLOPS (detectron 2) : ", flops.total())
+        # flops = FlopCountAnalysis(self.backbone, (samples,))
+        # flops.unsupported_ops_warnings(False).uncalled_modules_warnings(False)
+        # print("IMAGE BACKBONE FLOPS (detectron 2) : ", flops.total())
         features, poss = self.backbone(samples)
 
         # effvit_features = self.effvit_backbone(samples.tensors)
