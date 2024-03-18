@@ -426,7 +426,7 @@ class Transformer(nn.Module):
         #     ))
 
         # print(f"Decoder : {macs} || Params : {params} ")
-        flops = FlopCountAnalysis(self.encoder, (
+        flops = FlopCountAnalysis(self.decoder, (
             tgt.transpose(0, 1), # tgt
             memory.transpose(0, 1), # memory
             attn_mask, # tgt_mask
