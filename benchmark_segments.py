@@ -31,16 +31,17 @@ import torch
 import torch.nn as nn
 from functools import partial
 import time
-import torch.nn.functional as F
-# from util.slconfig import SLConfig
+
+from util.slconfig import SLConfig
 
 from typing import Any, Callable, List, Optional, Union
 from numbers import Number
 
 Handle = Callable[[List[Any], List[Any]], Union[typing.Counter[str], Number]]
 
-# from main import build_model_main, get_args_parser as get_main_args_parser
-# from datasets import bbuild_dataset
+from main import build_model_main, get_args_parser as get_main_args_parser
+from datasets import bbuild_dataset
+
 
 def get_shape(val: object) -> typing.List[int]:
     """
@@ -473,11 +474,10 @@ _HAS_ALREADY_SKIPPED = False
 
 
 def flop_count(
-    model,
+    model: nn.Module,
     inputs: typing.Tuple[object, ...],
     whitelist: typing.Union[typing.List[str], None] = None,
     customized_ops: typing.Union[typing.Dict[str, typing.Callable], None] = None,
-    is_image_backbone = False
 ) -> typing.DefaultDict[str, float]:
     """
     Given a model and an input to the model, compute the Gflops of the given
@@ -523,17 +523,10 @@ def flop_count(
 
     # Compatibility with torch.jit.
     if hasattr(torch.jit, "get_trace_graph"):
-        if is_image_backbone :
-            trace, _ = torch.jit.get_trace_graph(model, inputs)
-        else: 
-            trace, _ = torch.jit.get_trace_graph(model, inputs)
+        trace, _ = torch.jit.get_trace_graph(model, inputs)
         trace_nodes = trace.graph().nodes()
-        
     else:
-        if is_image_backbone :
-            trace, _ = torch.jit._get_trace_graph(model, inputs)
-        else: 
-            trace, _ = torch.jit._get_trace_graph(model, inputs)
+        trace, _ = torch.jit._get_trace_graph(model, inputs)
         trace_nodes = trace.nodes()
 
     skipped_ops = Counter()
@@ -569,112 +562,108 @@ def flop_count(
     return final_count
 
 
-# def get_dataset(main_args):
-#     """
-#     Gets the COCO dataset used for computing the flops on
-#     """
+def get_dataset(coco_path):
+    """
+    Gets the COCO dataset used for computing the flops on
+    """
 
-#     class DummyArgs:
-#         pass
+    class DummyArgs:
+        pass
 
-#     args = DummyArgs()
-#     anno_path = None
-#     root_path = None
-#     dataset = bbuild_dataset(image_set="val", args=main_args, datasetinfo={"root" : anno_path, "anno" : anno_path} ,custom_val_transforms="resize", custom_transform_res=[480])
-#     return dataset
-
-
-# def warmup(model, inputs, N=10):
-#     for i in range(N):
-#         out = model(inputs)
-#     torch.cuda.synchronize()
+    args = DummyArgs()
+    args.dataset_file = "coco"
+    args.coco_path = coco_path
+    args.masks = False
+    dataset = bbuild_dataset(image_set="val", args=args)
+    return dataset
 
 
-# def measure_time(model, inputs, N=10):
-#     warmup(model, inputs)
-#     s = time.time()
-#     for i in range(N):
-#         out = model(inputs)
-#     torch.cuda.synchronize()
-#     t = (time.time() - s) / N
-#     return t
+def warmup(model, inputs, N=10):
+    for i in range(N):
+        out = model(inputs)
+    torch.cuda.synchronize()
 
 
-# def fmt_res(data):
-#     # return data.mean(), data.std(), data.min(), data.max()
-#     return {
-#         "mean": data.mean(),
-#         "std": data.std(),
-#         "min": data.min(),
-#         "max": data.max(),
-#     }
+def measure_time(model, inputs, N=10):
+    warmup(model, inputs)
+    s = time.time()
+    for i in range(N):
+        out = model(inputs)
+    torch.cuda.synchronize()
+    t = (time.time() - s) / N
+    return t
 
 
-# def benchmark():
-#     _outputs = {}
-#     main_args = get_main_args_parser().parse_args()
-#     main_args.commad_txt = "Command: " + " ".join(sys.argv)
+def fmt_res(data):
+    # return data.mean(), data.std(), data.min(), data.max()
+    return {
+        "mean": data.mean(),
+        "std": data.std(),
+        "min": data.min(),
+        "max": data.max(),
+    }
 
-#     # load cfg file and update the args
-#     print("Loading config file from {}".format(main_args.config_file))
-#     cfg = SLConfig.fromfile(main_args.config_file)
-#     if main_args.options is not None:
-#         cfg.merge_from_dict(main_args.options)
-#     cfg_dict = cfg._cfg_dict.to_dict()
-#     args_vars = vars(main_args)
-#     for k, v in cfg_dict.items():
-#         if k not in args_vars:
-#             setattr(main_args, k, v)
-#         else:
-#             raise ValueError("Key {} can used by args only".format(k))
 
-#     dataset = get_dataset(main_args)
-#     model, _, _ = build_model_main(main_args)
-#     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
-#     _outputs.update({"nparam": n_parameters})
+def benchmark():
+    _outputs = {}
+    main_args = get_main_args_parser().parse_args()
+    main_args.commad_txt = "Command: " + " ".join(sys.argv)
 
-#     model.cuda()
-#     model.eval()
+    # load cfg file and update the args
+    print("Loading config file from {}".format(main_args.config_file))
+    cfg = SLConfig.fromfile(main_args.config_file)
+    if main_args.options is not None:
+        cfg.merge_from_dict(main_args.options)
+    cfg_dict = cfg._cfg_dict.to_dict()
+    args_vars = vars(main_args)
+    for k, v in cfg_dict.items():
+        if k not in args_vars:
+            setattr(main_args, k, v)
+        else:
+            raise ValueError("Key {} can used by args only".format(k))
 
-#     warmup_step = 5
-#     total_step = 20
+    dataset = bbuild_dataset("val", main_args)
+    model, _, _ = build_model_main(main_args)
+    n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    _outputs.update({"nparam": n_parameters})
 
-#     # 25 batches (25 images)
-#     images = []
-#     for idx in range(total_step):
-#         img, t = dataset[idx]
-#         images.append(img)
-    
+    model.cuda()
+    model.eval()
 
-#     # Run FLOPs calculation for individual model parts (copying the forward function)
-#     with torch.no_grad():
-#         tmp = []
-#         tmp2 = []
-#         for imgid, img in enumerate(tqdm.tqdm(images)):
-#             inputs = [img.to("cuda")]
-#             res = flop_count(model, (inputs,))
-#             tmp.append(sum(res.values()))
-#             t = measure_time(model, inputs)
-#             if imgid >= warmup_step:
-#                 tmp2.append(t)
+    warmup_step = 5
+    total_step = 20
 
-#     _outputs.update({"detailed_flops": res})
-#     _outputs.update({"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))})
-#     _outputs.update({"flops": fmt_res(np.array(tmp))})
+    images = []
+    for idx in range(total_step):
+        img, t = dataset[idx]
+        images.append(img)
 
-#     mean_infer_time = float(fmt_res(np.array(tmp2))["mean"])
-#     _outputs.update({"fps": 1 / mean_infer_time})
+    with torch.no_grad():
+        tmp = []
+        tmp2 = []
+        for imgid, img in enumerate(tqdm.tqdm(images)):
+            inputs = [img.to("cuda")]
+            res = flop_count(model, (inputs,))
+            t = measure_time(model, inputs)
+            tmp.append(sum(res.values()))
+            if imgid >= warmup_step:
+                tmp2.append(t)
+    _outputs.update({"detailed_flops": res})
+    _outputs.update({"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))})
 
-#     res = {"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))}
-#     # print(res)
+    mean_infer_time = float(fmt_res(np.array(tmp2))["mean"])
+    _outputs.update({"fps": 1 / mean_infer_time})
 
-#     output_file = os.path.join(main_args.output_dir, "flops", "log.txt")
-#     os.makedirs(os.path.dirname(output_file), exist_ok=True)
-#     with open(output_file, "a") as f:
-#         f.write(main_args.commad_txt + "\n")
-#         f.write(json.dumps(_outputs, indent=2) + "\n")
+    res = {"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))}
+    # print(res)
 
-#     return _outputs
+    output_file = os.path.join(main_args.output_dir, "flops", "log.txt")
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    with open(output_file, "a") as f:
+        f.write(main_args.commad_txt + "\n")
+        f.write(json.dumps(_outputs, indent=2) + "\n")
+
+    return _outputs
 
 
 if __name__ == "__main__":
