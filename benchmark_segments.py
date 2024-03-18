@@ -471,7 +471,6 @@ _IGNORED_OPS: typing.List[str] = [
     "aten::repeat",
     "aten::grid_sampler",
     "aten::constant_pad_nd",
-    "aten::eq"
 ]
 
 _HAS_ALREADY_SKIPPED = False

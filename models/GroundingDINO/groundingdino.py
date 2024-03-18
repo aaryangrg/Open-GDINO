@@ -397,7 +397,7 @@ class GroundingDINO(nn.Module):
         )
         for b in range(bs):
             for j in range(len_td):
-                if text_dict['text_token_mask'][b][j] == True:
+                # if text_dict['text_token_mask'][b][j] == True:
                     out['text_mask'][b][j] = True
 
         # for intermediate outputs
