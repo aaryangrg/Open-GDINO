@@ -18,6 +18,7 @@ from datasets.coco_eval import CocoEvaluator
 from datasets.cocogrounding_eval import CocoGroundingEvaluator
 
 from datasets.panoptic_eval import PanopticEvaluator
+from thop import profile
 
 def get_kld_loss(scale_pred, scale_soft, temperature = 1.0):
         p_s = F.log_softmax(scale_pred / temperature, dim=1)
@@ -243,7 +244,8 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         bs = samples.tensors.shape[0]
         input_captions = [caption] * bs
         with torch.cuda.amp.autocast(enabled=args.amp):
-
+            macs, params = profile(model, (samples, [{"caption" : caption} for _ in range(bs)]))
+            print("TOTAL MODEL FLOPS : ", macs)
             outputs = model(samples, captions=input_captions)
 
 
