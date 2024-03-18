@@ -401,16 +401,17 @@ class GroundingDINO(nn.Module):
                     out['text_mask'][b][j] = True
 
         # for intermediate outputs
-        if self.aux_loss:
-            out['aux_outputs'] = self._set_aux_loss(outputs_class, outputs_coord_list)
-        out['token']=one_hot_token
-        # # for encoder output
-        if hs_enc is not None:
-            # prepare intermediate outputs
-            interm_coord = ref_enc[-1]
-            interm_class = self.transformer.enc_out_class_embed(hs_enc[-1], text_dict)
-            out['interm_outputs'] = {'pred_logits': interm_class, 'pred_boxes': interm_coord}
-            out['interm_outputs_for_matching_pre'] = {'pred_logits': interm_class, 'pred_boxes': init_box_proposal}
+                    
+        # if self.aux_loss:
+        #     out['aux_outputs'] = self._set_aux_loss(outputs_class, outputs_coord_list)
+        # out['token']=one_hot_token
+        # # # for encoder output
+        # if hs_enc is not None:
+        #     # prepare intermediate outputs
+        #     interm_coord = ref_enc[-1]
+        #     interm_class = self.transformer.enc_out_class_embed(hs_enc[-1], text_dict)
+        #     out['interm_outputs'] = {'pred_logits': interm_class, 'pred_boxes': interm_coord}
+        #     out['interm_outputs_for_matching_pre'] = {'pred_logits': interm_class, 'pred_boxes': init_box_proposal}
 
         # outputs['pred_logits'].shape
         # torch.Size([4, 900, 256])
