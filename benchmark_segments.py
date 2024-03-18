@@ -16,6 +16,7 @@ from collections import OrderedDict, Counter, defaultdict
 import json
 import os
 from posixpath import join
+from re import I
 import sys
 
 
@@ -648,7 +649,10 @@ def benchmark():
         tmp2 = []
         for imgid, img in enumerate(tqdm.tqdm(images)):
             inputs = [img.to("cuda")] 
-            input_targets = [targets[imgid][key].to("cuda") for key in targets[imgid].keys()]
+            input_targets = {}
+            for key in targets[imgid].keys() :
+                input_targets[key] = targets[imgid][key].to("cuda")
+            input_targets = [input_targets]
             res = flop_count(model, (inputs, input_targets))
             t = measure_time(model, (inputs, input_targets))
             tmp.append(sum(res.values()))
