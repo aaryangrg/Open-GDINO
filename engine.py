@@ -245,9 +245,6 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         with torch.cuda.amp.autocast(enabled=args.amp):
 
             outputs = model(samples, captions=input_captions)
-            # res = flop_count(model, (samples,input_captions))
-            # total = (sum(res.values()))
-            # print("TOTAL FLOPS (total // 10) GF: ", total // 10)
 
 
         orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
