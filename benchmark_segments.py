@@ -621,8 +621,10 @@ def benchmark():
             setattr(main_args, k, v)
         else:
             raise ValueError("Key {} can used by args only".format(k))
+    with open(main_args.datasets) as f:
+        dataset_meta = json.load(f)
 
-    dataset = bbuild_dataset("val", main_args)
+    dataset = bbuild_dataset("val", main_args, dataset_meta["val"][0])
     model, _, _ = build_model_main(main_args)
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     _outputs.update({"nparam": n_parameters})
