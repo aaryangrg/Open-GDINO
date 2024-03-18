@@ -654,7 +654,7 @@ def benchmark():
         tmp2 = []
         for imgid, img in enumerate(tqdm.tqdm(images)):
             inputs = [img.to("cuda")] 
-            input_targets = {"caption" : targets[imgid].to("cuda")}
+            input_targets = {"caption" : targets[imgid]}
             input_targets = [input_targets]
             res = flop_count(model, (inputs, input_targets))
             t = measure_time(model, (inputs, input_targets))
