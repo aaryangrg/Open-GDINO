@@ -42,7 +42,7 @@ Handle = Callable[[List[Any], List[Any]], Union[typing.Counter[str], Number]]
 
 from main import build_model_main, get_args_parser as get_main_args_parser
 from datasets import bbuild_dataset
-
+from pycocotools.coco import COCO
 
 def get_shape(val: object) -> typing.List[int]:
     """
@@ -639,20 +639,22 @@ def benchmark():
 
     images = []
     targets = []
+    coco = COCO(main_args.coco_val_path)
+    category_dict = coco.loadCats(coco.getCatIds())
+    cat_list = [item['name'] for item in category_dict]
+    caption = " . ".join(cat_list) + ' .'
+
     for idx in range(total_step):
         img, t = dataset[idx]
         images.append(img)
-        targets.append(t)
+        targets.append(caption)
 
     with torch.no_grad():
         tmp = []
         tmp2 = []
         for imgid, img in enumerate(tqdm.tqdm(images)):
             inputs = [img.to("cuda")] 
-            input_targets = {}
-            for key in targets[imgid].keys() :
-                print(key)
-                input_targets[key] = targets[imgid][key].to("cuda")
+            input_targets = {"caption" : targets[imgid].to("cuda")}
             input_targets = [input_targets]
             res = flop_count(model, (inputs, input_targets))
             t = measure_time(model, (inputs, input_targets))
