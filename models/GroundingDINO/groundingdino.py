@@ -293,8 +293,8 @@ class GroundingDINO(nn.Module):
         # BERT CALL
         # macs,params = profile(self.bert,(tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
         # print(f"BERT : MACS : {macs} || Params : {params} ")
-        flops = FlopCountAnalysis(self.bert, (tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
-        print("TOTAL BERT FLOPS (Detectron2) : ", flops.total())
+        # flops = FlopCountAnalysis(self.bert, (tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
+        # print("TOTAL BERT FLOPS (Detectron2) : ", flops.total())
 
         bert_output = self.bert(**tokenized_for_encoder)  # bs, 195, 768
 
@@ -360,8 +360,8 @@ class GroundingDINO(nn.Module):
         # FEATURE ENHANCER + QUERY SELECTION (Encoder + Decoder respectively)
         # macs,params = profile(self.transformer,(srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
         # print(f"Encoder + Decoder : MACS : {macs} || Params : {params} ")
-        flops = FlopCountAnalysis(self.transformer, (srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
-        print("TRANSFORMER FLOPS (Detectron2)  : ", flops.total())
+        # flops = FlopCountAnalysis(self.transformer, (srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
+        # print("TRANSFORMER FLOPS (Detectron2)  : ", flops.total())
         hs, reference, hs_enc, ref_enc, init_box_proposal = self.transformer(
             srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict
         )
