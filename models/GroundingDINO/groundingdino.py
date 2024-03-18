@@ -362,9 +362,9 @@ class GroundingDINO(nn.Module):
         # FEATURE ENHANCER + QUERY SELECTION (Encoder + Decoder respectively)
         # macs,params = profile(self.transformer,(srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
         # print(f"Encoder + Decoder : MACS : {macs} || Params : {params} ")
-        # flops = FlopCountAnalysis(self.transformer, (srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
-        # flops.unsupported_ops_warnings(False).uncalled_modules_warnings(False)
-        # print("TRANSFORMER FLOPS (Detectron2)  : ", flops.total())
+        flops = FlopCountAnalysis(self.transformer, (srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
+        flops.unsupported_ops_warnings(False).uncalled_modules_warnings(False)
+        print("Transformer FLOPs : ", flops.total())
         hs, reference, hs_enc, ref_enc, init_box_proposal = self.transformer(
             srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict
         )

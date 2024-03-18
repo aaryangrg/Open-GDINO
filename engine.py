@@ -250,8 +250,6 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         with torch.cuda.amp.autocast(enabled=args.amp):
             # macs, params = profile(model, (samples, [{"caption" : caption} for _ in range(bs)]))
             # print("TOTAL MODEL FLOPS : ", macs)
-            flops = FlopCountAnalysis(model, (samples, [{"caption" : caption} for _ in range(bs)]))
-            print("Total Model FLOPs : ", flops.total())
             outputs = model(samples, captions=input_captions)
 
 
