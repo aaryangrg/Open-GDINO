@@ -244,8 +244,8 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         bs = samples.tensors.shape[0]
         input_captions = [caption] * bs
         with torch.cuda.amp.autocast(enabled=args.amp):
-            macs, params = profile(model, (samples, [{"caption" : caption} for _ in range(bs)]))
-            print("TOTAL MODEL FLOPS : ", macs)
+            # macs, params = profile(model, (samples, [{"caption" : caption} for _ in range(bs)]))
+            # print("TOTAL MODEL FLOPS : ", macs)
             outputs = model(samples, captions=input_captions)
 
 
