@@ -648,9 +648,9 @@ def benchmark():
         tmp2 = []
         for imgid, img in enumerate(tqdm.tqdm(images)):
             inputs = [img.to("cuda")] 
-            intput_targets = [targets[imgid].to("cuda")]
-            res = flop_count(model, (inputs, intput_targets))
-            t = measure_time(model, (inputs, intput_targets))
+            input_targets = [targets[imgid][key].to("cuda") for key in targets[imgid].keys()]
+            res = flop_count(model, (inputs, input_targets))
+            t = measure_time(model, (inputs, input_targets))
             tmp.append(sum(res.values()))
             if imgid >= warmup_step:
                 tmp2.append(t)
