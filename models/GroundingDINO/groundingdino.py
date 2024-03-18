@@ -325,8 +325,8 @@ class GroundingDINO(nn.Module):
         # IMAGE BACKBONE CALL
         # macs,params = profile(self.backbone,(samples,))
         # print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
-        flops = FlopCountAnalysis(self.backbone, (samples,))
-        print("IMAGE BACKBONE FLOPS (detectron 2) : ", flops.total())
+        # flops = FlopCountAnalysis(self.backbone, (samples,))
+        # print("IMAGE BACKBONE FLOPS (detectron 2) : ", flops.total())
             
         features, poss = self.backbone(samples)
 
