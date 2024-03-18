@@ -677,12 +677,13 @@ def benchmark():
         #         tmp2.append(t)
             count += 1
     _outputs.update({"detailed_flops": res})
-    _outputs.update({"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))})
+    # _outputs.update({"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))})
+    _outputs.update({"flops": fmt_res(np.array(tmp))})
 
-    mean_infer_time = float(fmt_res(np.array(tmp2))["mean"])
-    _outputs.update({"fps": 1 / mean_infer_time})
+    # mean_infer_time = float(fmt_res(np.array(tmp2))["mean"])
+    # _outputs.update({"fps": 1 / mean_infer_time})
 
-    res = {"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))}
+    # res = {"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))}
     # print(res)
 
     output_file = os.path.join(main_args.output_dir, "flops", "log.txt")
