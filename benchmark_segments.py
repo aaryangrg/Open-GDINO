@@ -623,6 +623,7 @@ def benchmark():
             raise ValueError("Key {} can used by args only".format(k))
     with open(main_args.datasets) as f:
         dataset_meta = json.load(f)
+    main_args.coco_val_path = dataset_meta["val"][0]["anno"]
 
     dataset = bbuild_dataset("val", main_args, dataset_meta["val"][0])
     model, _, _ = build_model_main(main_args)
