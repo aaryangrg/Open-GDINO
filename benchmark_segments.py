@@ -637,17 +637,20 @@ def benchmark():
     total_step = 20
 
     images = []
+    targets = []
     for idx in range(total_step):
         img, t = dataset[idx]
         images.append(img)
+        targets.append(t)
 
     with torch.no_grad():
         tmp = []
         tmp2 = []
         for imgid, img in enumerate(tqdm.tqdm(images)):
-            inputs = [img.to("cuda")]
-            res = flop_count(model, (inputs,))
-            t = measure_time(model, inputs)
+            inputs = [img.to("cuda")] 
+            intput_targets = [targets[imgid].to("cuda")]
+            res = flop_count(model, (inputs, intput_targets))
+            t = measure_time(model, (inputs, intput_targets))
             tmp.append(sum(res.values()))
             if imgid >= warmup_step:
                 tmp2.append(t)
