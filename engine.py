@@ -235,7 +235,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         cat_list=args.label_list
     caption = " . ".join(cat_list) + ' .'
     print("Input text prompt:", caption)
-
+    count = 0
     for samples, targets in metric_logger.log_every(data_loader, 10, header, logger=logger):
         samples = samples.to(device)
         print("Val image shape : ",samples.tensors.shape)
@@ -317,6 +317,9 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
             if _cnt % 15 == 0:
                 print("BREAK!"*5)
                 break
+        if count == 10 :
+            break
+        count += 1
 
     if args.save_results:
         import os.path as osp
