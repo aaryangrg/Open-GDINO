@@ -657,7 +657,10 @@ def benchmark():
     with torch.no_grad():
         tmp = []
         tmp2 = []
+        count = 0
         for samples, targets in data_loader_val :
+            if count == 20 :
+                break
             samples = samples.to("cuda")
             input_targets = {"caption" : caption}
             res = flop_count(model, (samples.tensors, samples.mask, [input_targets]))
@@ -672,6 +675,7 @@ def benchmark():
         #     tmp.append(sum(res.values()))
         #     if imgid >= warmup_step:
         #         tmp2.append(t)
+            count += 1
     _outputs.update({"detailed_flops": res})
     _outputs.update({"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))})
 
