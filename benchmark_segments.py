@@ -34,6 +34,7 @@ from functools import partial
 import time
 
 from util.slconfig import SLConfig
+from util.misc import collate_fn
 
 from typing import Any, Callable, List, Optional, Union
 from numbers import Number
@@ -43,6 +44,7 @@ Handle = Callable[[List[Any], List[Any]], Union[typing.Counter[str], Number]]
 from main import build_model_main, get_args_parser as get_main_args_parser
 from datasets import bbuild_dataset
 from pycocotools.coco import COCO
+from torch.utils.data import DataLoader
 
 def get_shape(val: object) -> typing.List[int]:
     """
@@ -643,24 +645,33 @@ def benchmark():
     category_dict = coco.loadCats(coco.getCatIds())
     cat_list = [item['name'] for item in category_dict]
     caption = " . ".join(cat_list) + ' .'
+    sampler_val = torch.utils.data.SequentialSampler(dataset)
+    data_loader_val = DataLoader(dataset, 1, sampler=sampler_val,
+                                 drop_last=False, collate_fn=collate_fn, num_workers=main_args.num_workers)
 
-    for idx in range(total_step):
-        img, t = dataset[idx]
-        images.append(img)
-        targets.append(caption)
+    # for idx in range(total_step):
+    #     img, t = dataset[idx]
+    #     images.append(img)
+    #     targets.append(caption)
 
     with torch.no_grad():
         tmp = []
         tmp2 = []
-        for imgid, img in enumerate(tqdm.tqdm(images)):
-            inputs = [img.to("cuda")] 
-            input_targets = {"caption" : targets[imgid]}
-            input_targets = [input_targets]
-            res = flop_count(model, (inputs, input_targets))
-            t = measure_time(model, (inputs, input_targets))
+        for samples, targets in data_loader_val :
+            samples = samples.to("cuda")
+            input_targets = {"caption" : caption}
+            res = flop_count(model, (samples, input_targets))
+            # t = measure_time(model, (inputs, input_targets))
             tmp.append(sum(res.values()))
-            if imgid >= warmup_step:
-                tmp2.append(t)
+        # for imgid, img in enumerate(tqdm.tqdm(images)):
+        #     inputs = [img.to("cuda")] 
+        #     input_targets = {"caption" : targets[imgid]}
+        #     input_targets = [input_targets]
+        #     res = flop_count(model, (inputs, input_targets))
+        #     t = measure_time(model, (inputs, input_targets))
+        #     tmp.append(sum(res.values()))
+        #     if imgid >= warmup_step:
+        #         tmp2.append(t)
     _outputs.update({"detailed_flops": res})
     _outputs.update({"flops": fmt_res(np.array(tmp)), "time": fmt_res(np.array(tmp2))})
 
