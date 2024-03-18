@@ -262,21 +262,21 @@ class Transformer(nn.Module):
         # Begin Encoder
         #########################################################
 
-        macs,params = profile(self.encoder,(
-            src_flatten, # src
-            lvl_pos_embed_flatten, # pos
-            spatial_shapes, # spatial_shapes
-            level_start_index, # level_start_index
-            valid_ratios, # valid_ratios
-            mask_flatten, # key_passing_mask
-            text_dict["encoded_text"], # memory_text
-            ~text_dict["text_token_mask"], # text_attention_mask
-            None, # pos_text 
-            text_dict["text_self_attention_masks"], # text_self_attention_masks
-            text_dict["position_ids"] # position_ids
-            ))
+        # macs,params = profile(self.encoder,(
+        #     src_flatten, # src
+        #     lvl_pos_embed_flatten, # pos
+        #     spatial_shapes, # spatial_shapes
+        #     level_start_index, # level_start_index
+        #     valid_ratios, # valid_ratios
+        #     mask_flatten, # key_passing_mask
+        #     text_dict["encoded_text"], # memory_text
+        #     ~text_dict["text_token_mask"], # text_attention_mask
+        #     None, # pos_text 
+        #     text_dict["text_self_attention_masks"], # text_self_attention_masks
+        #     text_dict["position_ids"] # position_ids
+        #     ))
         
-        print(f"Encoder MACS : {macs} || Params : {params} ")
+        # print(f"Encoder MACS : {macs} || Params : {params} ")
         memory, memory_text = self.encoder(
             src_flatten,
             pos=lvl_pos_embed_flatten,
@@ -390,23 +390,23 @@ class Transformer(nn.Module):
 
         # import pdb;pdb.set_trace()
 
-        macs,params = profile(self.decoder,(
-            tgt.transpose(0, 1), # tgt
-            memory.transpose(0, 1), # memory
-            attn_mask, # tgt_mask
-            None, # memory_mask
-            None, # tgt_key_passing_mask,
-            mask_flatten, # memory_key_padding_mask
-            lvl_pos_embed_flatten.transpose(0, 1), # pos
-            refpoint_embed.transpose(0, 1), # refpoints_unsigmoid 
-            level_start_index, # level_start_index
-            spatial_shapes, # spatial_shapes
-            valid_ratios, # valid_dations
-            text_dict["encoded_text"], # memory_text
-            ~text_dict["text_token_mask"], #text_attention_mask
-            ))
+        # macs,params = profile(self.decoder,(
+        #     tgt.transpose(0, 1), # tgt
+        #     memory.transpose(0, 1), # memory
+        #     attn_mask, # tgt_mask
+        #     None, # memory_mask
+        #     None, # tgt_key_passing_mask,
+        #     mask_flatten, # memory_key_padding_mask
+        #     lvl_pos_embed_flatten.transpose(0, 1), # pos
+        #     refpoint_embed.transpose(0, 1), # refpoints_unsigmoid 
+        #     level_start_index, # level_start_index
+        #     spatial_shapes, # spatial_shapes
+        #     valid_ratios, # valid_dations
+        #     text_dict["encoded_text"], # memory_text
+        #     ~text_dict["text_token_mask"], #text_attention_mask
+        #     ))
 
-        print(f"Decoder : {macs} || Params : {params} ")
+        # print(f"Decoder : {macs} || Params : {params} ")
         hs, references = self.decoder(
             tgt=tgt.transpose(0, 1),
             memory=memory.transpose(0, 1),

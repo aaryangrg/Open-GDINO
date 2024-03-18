@@ -25,6 +25,9 @@ from torch import nn
 from torchvision.ops.boxes import nms
 from transformers import AutoTokenizer, BertModel, BertTokenizer, RobertaModel, RobertaTokenizerFast
 from thop import profile
+from detectron2.utils.analysis import (
+    FlopCountAnalysis,
+)
 
 from groundingdino.util import box_ops, get_tokenlizer
 from groundingdino.util.misc import (
@@ -288,9 +291,11 @@ class GroundingDINO(nn.Module):
             tokenized_for_encoder = tokenized
 
         # BERT CALL
-        macs,params = profile(self.bert,(tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
-        print(f"BERT : MACS : {macs} || Params : {params} ")
-            
+        # macs,params = profile(self.bert,(tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
+        # print(f"BERT : MACS : {macs} || Params : {params} ")
+        flops = FlopCountAnalysis(self.bert, (tokenized_for_encoder["input_ids"], tokenized_for_encoder["attention_mask"],tokenized_for_encoder["token_type_ids"], tokenized_for_encoder["position_ids"] if "position_ids" in tokenized_for_encoder.keys() else None))
+        print("TOTAL BERT FLOPS (Detectron2) : ", flops.total())
+
         bert_output = self.bert(**tokenized_for_encoder)  # bs, 195, 768
 
         encoded_text = self.feat_map(bert_output["last_hidden_state"])  # bs, 195, d_model
@@ -318,8 +323,10 @@ class GroundingDINO(nn.Module):
             samples = nested_tensor_from_tensor_list(samples)
 
         # IMAGE BACKBONE CALL
-        macs,params = profile(self.backbone,(samples,))
-        print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
+        # macs,params = profile(self.backbone,(samples,))
+        # print(f"SWIN Image Backbone : MACS : {macs} || Params : {params} ")
+        flops = FlopCountAnalysis(self.backbone, (samples,))
+        print("IMAGE BACKBONE FLOPS (detectron 2) : ", flops.total())
             
         features, poss = self.backbone(samples)
 
@@ -353,6 +360,8 @@ class GroundingDINO(nn.Module):
         # FEATURE ENHANCER + QUERY SELECTION (Encoder + Decoder respectively)
         # macs,params = profile(self.transformer,(srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
         # print(f"Encoder + Decoder : MACS : {macs} || Params : {params} ")
+        flops = FlopCountAnalysis(self.transformer, (srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict,))
+        print("TRANSFORMER FLOPS (Detectron2)  : ", flops.total())
         hs, reference, hs_enc, ref_enc, init_box_proposal = self.transformer(
             srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict
         )
@@ -446,6 +455,7 @@ class GroundingDINO(nn.Module):
 
 
 class SetCriterion(nn.Module): 
+
     def __init__(self, matcher, weight_dict, focal_alpha,focal_gamma, losses):
         """ Create the criterion.
         Parameters:
