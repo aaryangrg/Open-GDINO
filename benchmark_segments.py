@@ -651,6 +651,7 @@ def benchmark():
             inputs = [img.to("cuda")] 
             input_targets = {}
             for key in targets[imgid].keys() :
+                print(key)
                 input_targets[key] = targets[imgid][key].to("cuda")
             input_targets = [input_targets]
             res = flop_count(model, (inputs, input_targets))
