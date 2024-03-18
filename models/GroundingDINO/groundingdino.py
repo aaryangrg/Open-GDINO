@@ -239,8 +239,8 @@ class GroundingDINO(nn.Module):
     def init_ref_points(self, use_num_queries):
         self.refpoint_embed = nn.Embedding(use_num_queries, self.query_dim)
 
-    # def forward(self, samples: NestedTensor, targets: List = None, **kw):
-    def forward(self, samples_tensor, samples_mask, targets: List = None, **kw):
+    def forward(self, samples: NestedTensor, targets: List = None, **kw):
+    # def forward(self, samples_tensor, samples_mask, targets: List = None, **kw):
         """The forward expects a NestedTensor, which consists of:
            - samples.tensor: batched images, of shape [batch_size x 3 x H x W]
            - samples.mask: a binary mask of shape [batch_size x H x W], containing 1 on padded pixels
@@ -255,7 +255,7 @@ class GroundingDINO(nn.Module):
            - "aux_outputs": Optional, only returned when auxilary losses are activated. It is a list of
                             dictionnaries containing the two above keys for each decoder layer.
         """
-        samples = NestedTensor(tensors=samples_tensor, mask = samples_mask)
+        # samples = NestedTensor(tensors=samples_tensor, mask = samples_mask)
         if targets is None:
             captions = kw["captions"]
         else:
