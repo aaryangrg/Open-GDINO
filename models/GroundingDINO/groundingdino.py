@@ -727,10 +727,11 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
             ft, mask = feat
             srcs.append(self.input_proj[l](ft))
             poss.append(self.position_embedding(NestedTensor(ft, mask)).to(ft.dtype))
-    
-        print("Masks dimension : ", torch.Tensor(masks).size)
-        print("srcs dimension : ", torch.Tensor(srcs).size)
-        print("poss dimension : ", torch.Tensor(poss).size)
+
+        for mask, src, pos in zip(masks, srcs, poss) :
+            print("Masks dimension : ", mask.size)
+            print("srcs dimension : ", src.size)
+            print("poss dimension : ", pos.size)
         
         input_query_bbox = input_query_label = attn_mask = dn_meta = None
 
