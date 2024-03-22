@@ -24,7 +24,7 @@ python3 -m torch.distributed.launch  --nproc_per_node 2  ../direct_distillation.
     --path ../experiments/backbone_distillation/test/ \
     --distributed  true \
     --fp16 \
-    --eval_batch_size 10 \
+    --eval_batch_size 16 \
     --effvit_model swint \
     --custom_transforms resize \
     --custom_res 480 
