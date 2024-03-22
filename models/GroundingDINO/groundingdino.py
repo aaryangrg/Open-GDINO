@@ -706,7 +706,7 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
             samples = nested_tensor_from_tensor_list(samples)
 
         
-        features, poss = self.backbone(samples) # Eventually get rid of this
+        # features, poss = self.backbone(samples) # Eventually get rid of this
 
         effvit_features = self.effvit_backbone(samples.tensors)
         effvit_features = effvit_features[1:] # Initial features contain extra smaller channels
@@ -727,6 +727,10 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
             ft, mask = feat
             srcs.append(self.input_proj[l](ft))
             poss.append(self.position_embedding(NestedTensor(ft, mask)).to(ft.dtype))
+    
+        print("Masks dimension : ", torch.tensor(masks).size)
+        print("srcs dimension : ", torch.tensor(srcs).size)
+        print("poss dimension : ", torch.tensor(poss).size)
         
         input_query_bbox = input_query_label = attn_mask = dn_meta = None
 
