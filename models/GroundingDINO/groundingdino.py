@@ -725,11 +725,8 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
         #IMP : effvit_features --> do not include position embeddings
         for l, (feat) in enumerate(zip(effvit_features,masks)) :
             ft, mask = feat
-            srcs.append(self.input_proj[l][ft])
+            srcs.append(self.input_proj[l](ft))
             poss.append(self.position_embedding(NestedTensor(ft, mask)).to(ft.dtype))
-        
-        srcs = []
-        masks = []
         
         input_query_bbox = input_query_label = attn_mask = dn_meta = None
 
@@ -737,7 +734,6 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
             srcs, masks, input_query_bbox, poss, input_query_label, attn_mask, text_dict
         )
 
-        
         # FINAL PREDICTION & BBOX REFINEMENT LAYERS
         outputs_coord_list = []
         for dec_lid, (layer_ref_sig, layer_bbox_embed, layer_hs) in enumerate(
