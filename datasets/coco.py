@@ -572,6 +572,64 @@ def make_coco_transforms(image_set, fix_size=False, strong_aug=False, args=None,
     raise ValueError(f'unknown {image_set}')
 
 
+def make_coco_transforms_custom(image_set, fix_size=False, strong_aug=False, args=None, custom_transforms = None, custom_res = None):
+
+    normalize = T.Compose([
+        T.ToTensor(),
+        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+
+     # config the params for data aug
+    scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
+    max_size = 1333
+    scales2_resize = [400, 500, 600]
+    scales2_crop = [384, 600]
+    
+    # update args from config files
+    scales = getattr(args, 'data_aug_scales', scales)
+    max_size = getattr(args, 'data_aug_max_size', max_size)
+    scales2_resize = getattr(args, 'data_aug_scales2_resize', scales2_resize)
+    scales2_crop = getattr(args, 'data_aug_scales2_crop', scales2_crop)
+
+    # resize them
+    data_aug_scale_overlap = getattr(args, 'data_aug_scale_overlap', None)
+    if data_aug_scale_overlap is not None and data_aug_scale_overlap > 0:
+        data_aug_scale_overlap = float(data_aug_scale_overlap)
+        scales = [int(i*data_aug_scale_overlap) for i in scales]
+        max_size = int(max_size*data_aug_scale_overlap)
+        scales2_resize = [int(i*data_aug_scale_overlap) for i in scales2_resize]
+        scales2_crop = [int(i*data_aug_scale_overlap) for i in scales2_crop]
+
+    if image_set == 'train':
+        if fix_size:
+            return T.Compose([
+                T.RandomHorizontalFlip(),
+                T.RandomResizeCustom(custom_res, max_size = max_size),
+                normalize,
+            ])
+        
+        # Ensure that end-size is always custom_res
+        return T.Compose([
+            T.RandomHorizontalFlip(),
+            T.RandomSelect(
+                T.RandomResizeCustom(custom_res, max_size=max_size),
+                T.Compose([
+                    T.RandomResize(scales2_resize),
+                    T.RandomSizeCrop(*scales2_crop),
+                    T.RandomResize(custom_res, max_size=max_size),
+                ])
+            ),
+            normalize,
+        ])
+
+    if image_set in ['val', 'eval_debug', 'train_reg', 'test']:
+        return T.Compose([
+            T.RandomResizeCustom(custom_res, max_size=max_size),
+            normalize,
+        ])
+
+    raise ValueError(f'unknown {image_set}')
+
 def get_aux_target_hacks_list(image_set, args):
     if args.modelname in ['q2bs_mask', 'q2bs']:
         aux_target_hacks_list = [
@@ -645,6 +703,26 @@ def build(image_set, args, datasetinfo, custom_val_transforms = None, custom_tra
     print(img_folder, ann_file)
     dataset = CocoDetection(img_folder, ann_file, 
             transforms=make_coco_transforms(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args, custom_val_transforms = custom_val_transforms, custom_res= custom_transform_res), 
+            return_masks=args.masks,
+            aux_target_hacks=None,
+        )
+    return dataset
+
+def build_custom(image_set, args, datasetinfo, custom_transforms, custom_res):
+    img_folder = datasetinfo["root"]
+    ann_file = datasetinfo["anno"]
+
+    # copy to local path
+    if os.environ.get('DATA_COPY_SHILONG') == 'INFO':
+        preparing_dataset(dict(img_folder=img_folder, ann_file=ann_file), image_set, args)
+
+    try:
+        strong_aug = args.strong_aug
+    except:
+        strong_aug = False
+    print(img_folder, ann_file)
+    dataset = CocoDetection(img_folder, ann_file, 
+            transforms=make_coco_transforms_custom(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args, custom_transforms = custom_transforms, custom_res= custom_res), 
             return_masks=args.masks,
             aux_target_hacks=None,
         )

@@ -7,6 +7,7 @@ import random
 import time
 from pathlib import Path
 import os, sys
+from models.GroundingDINO.groundingdino import GroundingDINOwithEfficientViTBB, build_groundingdino_with_efficientvit_bb
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, DistributedSampler
@@ -19,21 +20,17 @@ from util.utils import  BestMetricHolder
 from util.misc import MetricLogger
 import util.misc as utils
 import datasets
-from datasets import bbuild_dataset, get_coco_api_from_dataset
-from engine import evaluate, train_one_epoch
+from datasets import bbuild_dataset, bbuild_dataset_custom, get_coco_api_from_dataset
+from engine import evaluate, evaluate_custom, train_one_epoch
 import torch.distributed as dist
 
 from groundingdino.util.utils import clean_state_dict
 
 #EfficientViT Imports
 sys.path.append('/home/aaryang/experiments/Open-GDINO/effvit')
-from effvit.efficientvit.models.efficientvit.dino_backbone import flexible_efficientvit_backbone_swin_t_224_1k
 from effvit.efficientvit.clscore.trainer import ClsRunConfig
-from effvit.efficientvit.clscore.trainer.mutual_trainer import ClsMutualTrainer
-from effvit.efficientvit.models.nn.drop import apply_drop_func
-from effvit.efficientvit.apps.utils import dump_config, parse_unknown_args
 from effvit.efficientvit.apps import setup
-from effvit.efficientvit.clscore.trainer.gdino_backbone import GdinoBackboneTrainer
+from effvit.efficientvit.clscore.trainer.dino_flexless import GdinoBackboneTrainerNoFlex
 
 
 
@@ -89,6 +86,11 @@ def get_args_parser():
     parser.add_argument("--auto_restart_thresh", type=float, default=1.0)
     parser.add_argument("--save_freq", type=int, default=1)
     parser.add_argument("--full_flex_train", type = bool , default = False)
+    parser.add_argument("--eval_batch_size", type = int, default = 8)
+    parser.add_argument("--effvit_model", type = str, default = None)
+    parser.add_argument("--effvit_model_weights_path", type = str, default = None)
+    parser.add_argument("--custom_transforms", type = str, default = None)
+    parser.add_argument("--custom_res", type = int, default = None)
     return parser
 
 def build_model_main(args):
@@ -102,7 +104,6 @@ def build_model_main(args):
 
 
 def main(args):
-    
 
     utils.setup_distributed(args)
     # load cfg file and update the args
@@ -111,13 +112,6 @@ def main(args):
     cfg = SLConfig.fromfile(args.config_file)
     if args.options is not None:
         cfg.merge_from_dict(args.options)
-
-    # if args.rank == 0:
-    #     save_cfg_path = os.path.join(args.output_dir, "config_cfg.py")
-    #     cfg.dump(save_cfg_path)
-    #     save_json_path = os.path.join(args.output_dir, "config_args_raw.json")
-    #     with open(save_json_path, 'w') as f:
-    #         json.dump(vars(args), f, indent=2)
 
     cfg_dict = cfg._cfg_dict.to_dict()
     args_vars = vars(args)
@@ -136,12 +130,6 @@ def main(args):
     logger = setup_logger(output=os.path.join(args.output_dir, 'info.txt'), distributed_rank=args.rank, color=False, name="detr")
     logger.info("git:\n  {}\n".format(utils.get_sha()))
     logger.info("Command: "+' '.join(sys.argv))
-
-    # if args.rank == 0:
-    #     save_json_path = os.path.join(args.output_dir, "config_args_all.json")
-    #     with open(save_json_path, 'w') as f:
-    #         json.dump(vars(args), f, indent=2)
-        # logger.info("Full config saved to {}".format(save_json_path))
 
     with open(args.datasets) as f:
         dataset_meta = json.load(f)
@@ -166,35 +154,47 @@ def main(args):
     config = setup.setup_exp_config(args.config, recursive=True)
     run_config = setup.setup_run_config(config, ClsRunConfig)
 
-    # Extract LR scheduler + Optimizer from this
-
-    logger.debug("build model ... ...")
-    model, criterion, postprocessors = build_model_main(args)
+    gdino_backbone, _ , _ = build_model_main(args)
     wo_class_error = False
-    model.to(device)
-    logger.debug("build model, done.")
+    gdino_backbone.to(device)
 
-    pytorch_total = sum(p.numel() for p in model.backbone.parameters()) # Convert this to model.backbone.backbone (to get the actual Swin-Transformer)
-    print("Swin backbone params : ", pytorch_total)
-
-    effvit_backbone = flexible_efficientvit_backbone_swin_t_224_1k()
+    effvit_backbone, criterion, postprocessors = build_groundingdino_with_efficientvit_bb(args, args.effvit_model, args.effvit_model_weights_path)
     effvit_backbone.to("cuda")
-    pytorch_total_params = sum(p.numel() for p in effvit_backbone.parameters())
-    print("Backbone params : ", pytorch_total_params)
-
-    # make effvit_backbone data parallel as well as the main model (set to eval)
-    model_without_ddp = model
 
     if args.distributed :
-
+        # Make both distributed data parallel for efficient training
         effvit_backbone = torch.nn.parallel.DistributedDataParallel(effvit_backbone, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
         effvit_backbone = effvit_backbone.module
-        # effvit_backbone = torch.nn.DataParallel(effvit_backbone)
-        # effvit_backbone = effvit_backbone.module
+        gdino_backbone = torch.nn.parallel.DistributedDataParallel(gdino_backbone, device_ids=[args.gpu], find_unused_parameters=args.find_unused_params)
+        gdino_backbone = gdino_backbone.module
+
+    if args.pretrain_model_path: # Load for both models (backbone + efficientViT for validation purposes)
+        checkpoint = torch.load(args.pretrain_model_path, map_location='cpu')['model']
+        from collections import OrderedDict
+        _ignorekeywordlist = args.finetune_ignore if args.finetune_ignore else []
+        ignorelist = []
+
+        def check_keep(keyname, ignorekeywordlist):
+            for keyword in ignorekeywordlist:
+                if keyword in keyname:
+                    ignorelist.append(keyname)
+                    return False
+            return True
+
+        logger.info("Ignore keys: {}".format(json.dumps(ignorelist, indent=2)))
+        _tmp_st = OrderedDict({k:v for k, v in utils.clean_state_dict(checkpoint).items() if check_keep(k, _ignorekeywordlist)})
+
+        _ = gdino_backbone.load_state_dict(_tmp_st, strict = False)
+        _ = effvit_backbone.load_state_dict(_tmp_st, strict = False)
+        # For effivit set backbone[1] to effvit.position_embedding (to use the pretrained weights if trained embeddings)
+        effvit_backbone.position_embedding = effvit_backbone.backbone[1]
+
+    # Swin-Transformer without Joiner wrapper (skips position embeds)
+    gdino_backbone = gdino_backbone.backbone.backbone 
     
     logger.debug("build dataset ... ...")
-    dataset_train = bbuild_dataset(image_set='train', args=args, datasetinfo=dataset_meta["train"][0])
-    dataset_val = bbuild_dataset(image_set='val', args=args, datasetinfo=dataset_meta["val"][0])
+    dataset_train = bbuild_dataset_custom(image_set='train', args=args, datasetinfo=dataset_meta["train"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
+    dataset_val = bbuild_dataset_custom(image_set='val', args=args, datasetinfo=dataset_meta["val"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
     logger.debug("build dataset, done.")
 
     if args.distributed:
@@ -204,18 +204,17 @@ def main(args):
         sampler_val = torch.utils.data.SequentialSampler(dataset_val)
         sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
-    print("batch_size : ", args.batch_size)
     batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
-    data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,collate_fn=utils.collate_fn, num_workers=args.num_workers)
-    data_loader_val = DataLoader(dataset_val, 4, sampler=sampler_val,drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers)
+    data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 4
+    data_loader_val = DataLoader(dataset_val, args.eval_batch_size, sampler=sampler_val,drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 8
 
     metric_logger = MetricLogger(delimiter="  ")
     metric_logger.add_meter('loss', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
 
-    trainer = GdinoBackboneTrainer(
+    trainer = GdinoBackboneTrainerNoFlex(
         path=args.path,
-        vit_backbone=effvit_backbone,
-        dino_backbone = model_without_ddp,
+        effvit_dino=effvit_backbone,
+        gdino_backbone = gdino_backbone,
         data_provider=data_loader_train,
         auto_restart_thresh=args.auto_restart_thresh,
         metric_logger = metric_logger,
@@ -231,56 +230,10 @@ def main(args):
 
     trainer.prep_for_training_custom(run_config, config["ema_decay"], args.fp16)
 
-    # Extract LR scheduler + Optimizer + scaler??
-
     base_ds = get_coco_api_from_dataset(dataset_val)
 
-    # Initial pre-trained weight load
-
-    if args.frozen_weights is not None:
-        checkpoint = torch.load(args.frozen_weights, map_location='cpu')
-        model_without_ddp.detr.load_state_dict(clean_state_dict(checkpoint['model']),strict=False)
-
     output_dir = Path(args.output_dir)
-    if os.path.exists(os.path.join(args.output_dir, 'checkpoint.pth')):
-        args.resume = os.path.join(args.output_dir, 'checkpoint.pth')
-
-    if  args.pretrain_model_path:
-        print("loading original model weights")
-        checkpoint = torch.load(args.pretrain_model_path, map_location='cpu')['model']
-        from collections import OrderedDict
-        _ignorekeywordlist = args.finetune_ignore if args.finetune_ignore else []
-        ignorelist = []
-
-        def check_keep(keyname, ignorekeywordlist):
-            for keyword in ignorekeywordlist:
-                if keyword in keyname:
-                    ignorelist.append(keyname)
-                    return False
-            return True
-        print("Cleaning state dict")
-        # logger.info("Ignore keys: {}".format(json.dumps(ignorelist, indent=2)))
-        _tmp_st = OrderedDict({k:v for k, v in utils.clean_state_dict(checkpoint).items() if check_keep(k, _ignorekeywordlist)})
-
-        _load_output = model_without_ddp.load_state_dict(_tmp_st, strict=False)
-        logger.info(str(_load_output))
-
-    trainer.train(save_freq=args.save_freq)
- 
-    
-    # if args.eval:
-    #     os.environ['EVAL_FLAG'] = 'TRUE'
-    #     test_stats, coco_evaluator = evaluate(model, criterion, postprocessors,
-    #                                           data_loader_val, base_ds, device, args.output_dir, wo_class_error=wo_class_error, args=args)
-    #     if args.output_dir:
-    #         utils.save_on_master(coco_evaluator.coco_eval["bbox"].eval, output_dir / "eval.pth")
-
-    #     log_stats = {**{f'test_{k}': v for k, v in test_stats.items()} }
-    #     if args.output_dir and utils.is_main_process():
-    #         with (output_dir / "log.txt").open("a") as f:
-    #             f.write(json.dumps(log_stats) + "\n")
-
-    #     return
+    trainer.train(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('DETR training and evaluation script', parents=[get_args_parser()])

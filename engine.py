@@ -239,7 +239,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         cat_list=args.label_list
     caption = " . ".join(cat_list) + ' .'
     print("Input text prompt:", caption)
-    count = 0
+
     for samples, targets in metric_logger.log_every(data_loader, 10, header, logger=logger):
         samples = samples.to(device)
         print("Val image shape : ",samples.tensors.shape)
@@ -321,9 +321,6 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
             if _cnt % 15 == 0:
                 print("BREAK!"*5)
                 break
-        if count == 5 :
-            break
-        count += 1
 
     if args.save_results:
         import os.path as osp
@@ -362,6 +359,92 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         stats['PQ_st'] = panoptic_res["Stuff"]
 
 
+
+    return stats, coco_evaluator
+
+
+
+@torch.no_grad()
+def evaluate_custom(model, criterion, postprocessors, data_loader, base_ds, device, wo_class_error=False, args=None, logger=None):
+
+    model.eval()
+    criterion.eval()
+
+    metric_logger = utils.MetricLogger(delimiter="  ")
+    if not wo_class_error:
+        metric_logger.add_meter('class_error', utils.SmoothedValue(window_size=1, fmt='{value:.2f}'))
+    header = 'Test:'
+
+    iou_types = tuple(k for k in ('segm', 'bbox') if k in postprocessors.keys())
+    useCats = True
+    try:
+        useCats = args.useCats
+    except:
+        useCats = True
+    if not useCats:
+        print("useCats: {} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!".format(useCats))
+    
+    coco_evaluator = CocoGroundingEvaluator(base_ds, iou_types, useCats=useCats)
+
+    _cnt = 0
+    output_state_dict = {} # for debug only
+
+    if args.use_coco_eval:
+        from pycocotools.coco import COCO
+        coco = COCO(args.coco_val_path)
+
+        category_dict = coco.loadCats(coco.getCatIds())
+        cat_list = [item['name'] for item in category_dict]
+    else:
+        cat_list=args.label_list
+    caption = " . ".join(cat_list) + ' .'
+
+    for samples, targets in metric_logger.log_every(data_loader, 10, header, logger=logger):
+        samples = samples.to(device)
+        targets = [{k: to_device(v, device) for k, v in t.items()} for t in targets]
+
+        bs = samples.tensors.shape[0]
+        input_captions = [caption] * bs
+        with torch.cuda.amp.autocast(enabled=args.amp):
+            outputs = model(samples, captions=input_captions)
+
+
+        orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
+
+        results = postprocessors['bbox'](outputs, orig_target_sizes)
+        # [scores: [100], labels: [100], boxes: [100, 4]] x B
+        if 'segm' in postprocessors.keys():
+            target_sizes = torch.stack([t["size"] for t in targets], dim=0)
+            results = postprocessors['segm'](results, outputs, orig_target_sizes, target_sizes)
+            
+        res = {target['image_id'].item(): output for target, output in zip(targets, results)}
+
+        if coco_evaluator is not None:
+            coco_evaluator.update(res)
+
+        _cnt += 1
+        if args.debug:
+            if _cnt % 15 == 0:
+                print("BREAK!"*5)
+                break
+
+    # gather the stats from all processes
+    metric_logger.synchronize_between_processes()
+    print("Averaged stats:", metric_logger)
+    if coco_evaluator is not None:
+        coco_evaluator.synchronize_between_processes()
+
+    # accumulate predictions from all images
+    if coco_evaluator is not None:
+        coco_evaluator.accumulate()
+        coco_evaluator.summarize()
+        
+    stats = {k: meter.global_avg for k, meter in metric_logger.meters.items() if meter.count > 0}
+    if coco_evaluator is not None:
+        if 'bbox' in postprocessors.keys():
+            stats['coco_eval_bbox'] = coco_evaluator.coco_eval['bbox'].stats.tolist()
+        if 'segm' in postprocessors.keys():
+            stats['coco_eval_masks'] = coco_evaluator.coco_eval['segm'].stats.tolist()
 
     return stats, coco_evaluator
 

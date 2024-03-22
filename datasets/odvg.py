@@ -1,3 +1,4 @@
+
 from torchvision.datasets.vision import VisionDataset
 import os.path
 from typing import Callable, Optional
@@ -9,6 +10,7 @@ import os, sys
 sys.path.append(os.path.dirname(sys.path[0]))
 
 import datasets.transforms as T
+from datasets.coco import make_coco_transforms_custom
 
 class ODVGDataset(VisionDataset):
     """
@@ -235,6 +237,20 @@ def build_odvg(image_set, args, datasetinfo):
     print(img_folder, ann_file, label_map)
     dataset = ODVGDataset(img_folder, ann_file, label_map, max_labels=args.max_labels,
             transforms=make_coco_transforms(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args), 
+    )
+    return dataset
+
+def build_odvg_custom(image_set, args, datasetinfo, custom_transforms, custom_res):
+    img_folder = datasetinfo["root"]
+    ann_file = datasetinfo["anno"]
+    label_map = datasetinfo["label_map"] if "label_map" in datasetinfo else None 
+    try:
+        strong_aug = args.strong_aug
+    except:
+        strong_aug = False
+    print(img_folder, ann_file, label_map)
+    dataset = ODVGDataset(img_folder, ann_file, label_map, max_labels=args.max_labels,
+            transforms=make_coco_transforms_custom(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args, custom_transforms = custom_transforms, custom_res = custom_res), 
     )
     return dataset
 
