@@ -728,9 +728,9 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
             srcs.append(self.input_proj[l](ft))
             poss.append(self.position_embedding(NestedTensor(ft, mask)).to(ft.dtype))
     
-        print("Masks dimension : ", torch.tensor(masks).size)
-        print("srcs dimension : ", torch.tensor(srcs).size)
-        print("poss dimension : ", torch.tensor(poss).size)
+        print("Masks dimension : ", torch.Tensor(masks).size)
+        print("srcs dimension : ", torch.Tensor(srcs).size)
+        print("poss dimension : ", torch.Tensor(poss).size)
         
         input_query_bbox = input_query_label = attn_mask = dn_meta = None
 
