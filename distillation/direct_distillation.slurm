@@ -17,7 +17,7 @@ nvidia-smi
 
 python3 -m torch.distributed.launch  --nproc_per_node 2  ../direct_distillation.py \
     --config_file ../config/cfg_odvg.py \
-    --pretrain_model_path ../weights/groundingdino_swint_ogc.pth \
+    --pretrain_model_path ../weights/gdinot-coco-ft.pth \
     --output_dir ../results/backbone_distillation/test/ \
     --datasets ../config/coco_od_datasets.json \
     --config ../effvit/configs/cls/imagenet/b1.yaml \
