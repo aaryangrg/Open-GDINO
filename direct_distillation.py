@@ -91,6 +91,7 @@ def get_args_parser():
     parser.add_argument("--effvit_model_weights_path", type = str, default = None)
     parser.add_argument("--custom_transforms", type = str, default = None)
     parser.add_argument("--custom_res", type = int, default = None)
+    parser.add_argument("--kd_loss", type = str, default = "ce")
     return parser
 
 def build_model_main(args):
@@ -219,7 +220,8 @@ def main(args):
         auto_restart_thresh=args.auto_restart_thresh,
         metric_logger = metric_logger,
         train_full_flexible_model = args.full_flex_train,
-        fp16_training = args.fp16 
+        fp16_training = args.fp16,
+        kd_metric = args.kd_loss
     )
 
     setup.init_model(
