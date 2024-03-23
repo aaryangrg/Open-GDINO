@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --account=group3
-#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/backbone_distillation/test.out
+#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/backbone_distillation/test_l2.out
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:2   # And two GPU
 #SBATCH --cpus-per-task=8           # Two cores per task
 #SBATCH --job-name=BackDistill
-#SBATCH --constraint=gmem24
+#SBATCH --constraint=gmem32
 
 source /home/aaryang/anaconda3/bin/activate
 conda activate opdino
@@ -18,10 +18,10 @@ nvidia-smi
 python3 -m torch.distributed.launch  --nproc_per_node 2  ../direct_distillation.py \
     --config_file ../config/cfg_odvg.py \
     --pretrain_model_path ../weights/gdinot-coco-ft.pth \
-    --output_dir ../results/backbone_distillation/test/ \
+    --output_dir ../results/backbone_distillation/test_l2/ \
     --datasets ../config/coco_od_datasets.json \
     --config ../effvit/configs/cls/imagenet/b1.yaml \
-    --path ../experiments/backbone_distillation/test/ \
+    --path ../experiments/backbone_distillation/test_l2/ \
     --distributed  true \
     --fp16 \
     --eval_batch_size 16 \
