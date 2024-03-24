@@ -92,6 +92,7 @@ def get_args_parser():
     parser.add_argument("--custom_transforms", type = str, default = None)
     parser.add_argument("--custom_res", type = int, default = None)
     parser.add_argument("--kd_loss", type = str, default = "ce")
+    parser.add_argument("--pretrained_patch_embed", type = bool, default = False)
     return parser
 
 def build_model_main(args):
@@ -187,8 +188,18 @@ def main(args):
 
         _ = gdino_backbone.load_state_dict(_tmp_st, strict = False)
         _ = effvit_backbone.load_state_dict(_tmp_st, strict = False)
+
         # For effivit set backbone[1] to effvit.position_embedding (to use the pretrained weights if trained embeddings)
         effvit_backbone.position_embedding = effvit_backbone.backbone[1]
+        
+        for param in effvit_backbone.position_embedding.parameters():
+            param.requires_grad = False
+        
+        # For effivit set backbone[0] to effvit.patch_embed (to use the pretrained patch_embeddings)
+        if args.pretrained_patch_embed :
+            effvit_backbone.patch_embed = effvit_backbone.backbone[0].patch_embed
+            for param in effvit_backbone.patch_embed.paraneters():
+                param.requires_grad = False
 
     # Swin-Transformer without Joiner wrapper (skips position embeds)
     gdino_backbone = gdino_backbone.backbone.backbone 
