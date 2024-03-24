@@ -628,7 +628,7 @@ class SwinTransformer(nn.Module):
 
         # add a norm layer for each output
         for i_layer in out_indices:
-            layer = norm_layer(num_features[i_layer])
+            layer = nn.LayerNorm(num_features[i_layer])
             layer_name = f"norm{i_layer}"
             self.add_module(layer_name, layer)
 
