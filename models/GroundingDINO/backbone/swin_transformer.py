@@ -545,7 +545,7 @@ class SwinTransformer(nn.Module):
         norm_layer=nn.LayerNorm,
         ape=False,
         patch_norm=True,
-        out_indices=(0, 1, 2, 3),
+        out_indices=(0, 1, 2, 3), # (1,2,3) from configs
         frozen_stages=-1,
         dilation=False,
         use_checkpoint=False,
