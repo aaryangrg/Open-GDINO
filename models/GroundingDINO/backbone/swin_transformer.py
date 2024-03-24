@@ -335,7 +335,7 @@ class PatchMerging(nn.Module):
         x = x.view(B, -1, 4 * C)  # B H/2*W/2 4*C
 
         x = self.norm(x)
-        x = self.reduction(x)
+        x = self.reduction(x) # B x H/2 * W/2 x 2*C
 
         return x
 
@@ -449,7 +449,7 @@ class BasicLayer(nn.Module):
             else:
                 x = blk(x, attn_mask)
         if self.downsample is not None:
-            x_down = self.downsample(x, H, W)
+            x_down = self.downsample(x, H, W) # x_down = B x (h/2 * W/2) x 2C
             Wh, Ww = (H + 1) // 2, (W + 1) // 2
             return x, H, W, x_down, Wh, Ww
         else:
@@ -491,9 +491,9 @@ class PatchEmbed(nn.Module):
         x = self.proj(x)  # B C Wh Ww
         if self.norm is not None:
             Wh, Ww = x.size(2), x.size(3)
-            x = x.flatten(2).transpose(1, 2)
+            x = x.flatten(2).transpose(1, 2) # B x (wh x ww) x C
             x = self.norm(x)
-            x = x.transpose(1, 2).view(-1, self.embed_dim, Wh, Ww)
+            x = x.transpose(1, 2).view(-1, self.embed_dim, Wh, Ww) # B x C x Wh x Ww
 
         return x
 
@@ -597,7 +597,7 @@ class SwinTransformer(nn.Module):
         # build layers
         self.layers = nn.ModuleList()
         # prepare downsample list
-        downsamplelist = [PatchMerging for i in range(self.num_layers)]
+        downsamplelist = [PatchMerging for i in range(self.num_layers)] # B x H/2 * W/2 x 2*C (output of a patch merge)
         downsamplelist[-1] = None
         num_features = [int(embed_dim * 2**i) for i in range(self.num_layers)]
         if self.dilation:
@@ -624,7 +624,7 @@ class SwinTransformer(nn.Module):
             self.layers.append(layer)
 
         # num_features = [int(embed_dim * 2 ** i) for i in range(self.num_layers)]
-        self.num_features = num_features
+        self.num_features = num_features # [embeddim, 2x embeddim, 4x embeddim, 8x embeddim] --> for ex (96, 192, 384, 768)
 
         # add a norm layer for each output
         for i_layer in out_indices:
