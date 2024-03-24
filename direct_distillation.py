@@ -191,12 +191,13 @@ def main(args):
 
         # For effivit set backbone[1] to effvit.position_embedding (to use the pretrained weights if trained embeddings)
         effvit_backbone.position_embedding = effvit_backbone.backbone[1]
-        
         for param in effvit_backbone.position_embedding.parameters():
             param.requires_grad = False
+        print("[USING PRETRAINED POSITION EMBEDDINGS FOR BACKBONE]")
         
         # For effivit set backbone[0] to effvit.patch_embed (to use the pretrained patch_embeddings)
         if args.pretrained_patch_embed :
+            print("[USING PRETRAINED PATCH EMBEDDINGS]")
             effvit_backbone.patch_embed = effvit_backbone.backbone[0].patch_embed
             for param in effvit_backbone.patch_embed.paraneters():
                 param.requires_grad = False
