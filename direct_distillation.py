@@ -204,50 +204,56 @@ def main(args):
 
     # Swin-Transformer without Joiner wrapper (skips position embeds)
     gdino_backbone = gdino_backbone.backbone.backbone 
+
+    print("EFFVIT BACKBONE")
+    print(effvit_backbone.effvit_backbone)
+    print("GDINO BACKBONE")
+    print(gdino_backbone)
+
     
-    logger.debug("build dataset ... ...")
-    dataset_train = bbuild_dataset_custom(image_set='train', args=args, datasetinfo=dataset_meta["train"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
-    dataset_val = bbuild_dataset_custom(image_set='val', args=args, datasetinfo=dataset_meta["val"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
-    logger.debug("build dataset, done.")
+    # logger.debug("build dataset ... ...")
+    # dataset_train = bbuild_dataset_custom(image_set='train', args=args, datasetinfo=dataset_meta["train"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
+    # dataset_val = bbuild_dataset_custom(image_set='val', args=args, datasetinfo=dataset_meta["val"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
+    # logger.debug("build dataset, done.")
 
-    if args.distributed:
-        sampler_val = DistributedSampler(dataset_val, shuffle=False)
-        sampler_train = DistributedSampler(dataset_train)
-    else:
-        sampler_val = torch.utils.data.SequentialSampler(dataset_val)
-        sampler_train = torch.utils.data.RandomSampler(dataset_train)
+    # if args.distributed:
+    #     sampler_val = DistributedSampler(dataset_val, shuffle=False)
+    #     sampler_train = DistributedSampler(dataset_train)
+    # else:
+    #     sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+    #     sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
-    batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
-    data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 4
-    data_loader_val = DataLoader(dataset_val, args.eval_batch_size, sampler=sampler_val,drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 8
+    # batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
+    # data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 4
+    # data_loader_val = DataLoader(dataset_val, args.eval_batch_size, sampler=sampler_val,drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 8
 
-    metric_logger = MetricLogger(delimiter="  ")
-    metric_logger.add_meter('loss', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
+    # metric_logger = MetricLogger(delimiter="  ")
+    # metric_logger.add_meter('loss', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
 
-    trainer = GdinoBackboneTrainerNoFlex(
-        path=args.path,
-        effvit_dino=effvit_backbone,
-        gdino_backbone = gdino_backbone,
-        data_provider=data_loader_train,
-        auto_restart_thresh=args.auto_restart_thresh,
-        metric_logger = metric_logger,
-        train_full_flexible_model = args.full_flex_train,
-        fp16_training = args.fp16,
-        kd_metric = args.kd_loss
-    )
+    # trainer = GdinoBackboneTrainerNoFlex(
+    #     path=args.path,
+    #     effvit_dino=effvit_backbone,
+    #     gdino_backbone = gdino_backbone,
+    #     data_provider=data_loader_train,
+    #     auto_restart_thresh=args.auto_restart_thresh,
+    #     metric_logger = metric_logger,
+    #     train_full_flexible_model = args.full_flex_train,
+    #     fp16_training = args.fp16,
+    #     kd_metric = args.kd_loss
+    # )
 
-    setup.init_model(
-        trainer.network,
-        rand_init=args.rand_init,
-        last_gamma=args.last_gamma,
-    )
+    # setup.init_model(
+    #     trainer.network,
+    #     rand_init=args.rand_init,
+    #     last_gamma=args.last_gamma,
+    # )
 
-    trainer.prep_for_training_custom(run_config, config["ema_decay"], args.fp16)
+    # trainer.prep_for_training_custom(run_config, config["ema_decay"], args.fp16)
 
-    base_ds = get_coco_api_from_dataset(dataset_val)
+    # base_ds = get_coco_api_from_dataset(dataset_val)
 
-    output_dir = Path(args.output_dir)
-    trainer.train(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
+    # output_dir = Path(args.output_dir)
+    # trainer.train(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('DETR training and evaluation script', parents=[get_args_parser()])
