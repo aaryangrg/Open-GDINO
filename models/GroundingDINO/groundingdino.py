@@ -706,62 +706,40 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
             samples = nested_tensor_from_tensor_list(samples)
 
 
-        # effvit_features = self.effvit_backbone(samples.tensors)
-        # effvit_features = effvit_features[1:] # Initial features contain extra smaller channels
+        effvit_features = self.effvit_backbone(samples.tensors)
+        effvit_features = effvit_features[1:] # Initial features contain extra smaller channels
 
-        # masks = []
-        # srcs = []
-        # poss = []
-
-        # #IMP : effvit_features also do not include masks interpolation
-        # for ft in effvit_features :
-        #     m = samples.mask
-        #     assert m is not None
-        #     mask = F.interpolate(m[None].float(), size=ft.shape[-2:]).to(torch.bool)[0]
-        #     masks.append(mask)
-
-        # #IMP : effvit_features --> do not include position embeddings (calculated on original ft and mask)
-        # for l, (feat) in enumerate(zip(effvit_features,masks)) :
-        #     ft, mask = feat
-        #     srcs.append(self.input_proj[l](ft)) # projected features
-        #     poss.append(self.position_embedding(NestedTensor(ft, mask)).to(ft.dtype))
-        
-        # if self.num_feature_levels > len(srcs): # Num feature levels = 4 || Srcs = 3
-        #     _len_srcs = len(srcs)
-        #     for l in range(_len_srcs, self.num_feature_levels):
-        #         if l == _len_srcs:
-        #             src = self.input_proj[l](effvit_features[-1])
-        #         else:
-        #             src = self.input_proj[l](srcs[-1])
-        #         m = samples.mask
-        #         mask = F.interpolate(m[None].float(), size=src.shape[-2:]).to(torch.bool)[0]
-        #         pos_l = self.position_embedding(NestedTensor(src, mask)).to(src.dtype) # Here poss is calculated on projected features
-        #         srcs.append(src)
-        #         masks.append(mask)
-        #         poss.append(pos_l)
-        
-        features, poss = self.backbone(samples)
-
-        srcs = []
         masks = []
-        for l, feat in enumerate(features):
-            src, mask = feat.decompose()
-            srcs.append(self.input_proj[l](src))
+        srcs = []
+        poss = []
+
+        #IMP : effvit_features also do not include masks interpolation
+        for ft in effvit_features :
+            m = samples.mask
+            assert m is not None
+            mask = F.interpolate(m[None].float(), size=ft.shape[-2:]).to(torch.bool)[0]
             masks.append(mask)
-            assert mask is not None
-        if self.num_feature_levels > len(srcs): # 4 > 3 --> require to replicate some feature
+
+        #IMP : effvit_features --> do not include position embeddings (calculated on original ft and mask)
+        for l, (feat) in enumerate(zip(effvit_features,masks)) :
+            ft, mask = feat
+            srcs.append(self.input_proj[l](ft)) # projected features
+            poss.append(self.position_embedding(NestedTensor(ft, mask)).to(ft.dtype))
+        
+        if self.num_feature_levels > len(srcs): # Num feature levels = 4 || Srcs = 3
             _len_srcs = len(srcs)
             for l in range(_len_srcs, self.num_feature_levels):
                 if l == _len_srcs:
-                    src = self.input_proj[l](features[-1].tensors)
+                    src = self.input_proj[l](effvit_features[-1])
                 else:
                     src = self.input_proj[l](srcs[-1])
                 m = samples.mask
                 mask = F.interpolate(m[None].float(), size=src.shape[-2:]).to(torch.bool)[0]
-                pos_l = self.backbone[1](NestedTensor(src, mask)).to(src.dtype)
+                pos_l = self.position_embedding(NestedTensor(src, mask)).to(src.dtype) # Here poss is calculated on projected features
                 srcs.append(src)
                 masks.append(mask)
                 poss.append(pos_l)
+        
         
         input_query_bbox = input_query_label = attn_mask = dn_meta = None
 
