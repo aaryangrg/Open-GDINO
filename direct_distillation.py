@@ -200,8 +200,7 @@ def main(args):
             print("[USING PRETRAINED PATCH EMBEDDINGS]")
             # This didn't work correctly ? --> missing Layer Norm
             effvit_backbone.patch_embed = effvit_backbone.backbone.backbone.patch_embed
-            print(effvit_backbone.backbone.backbone.patch_embed)
-            print(gdino_backbone.backbone.backbone.patch_embed)
+            print(effvit_backbone.patch_embed)
             for param in effvit_backbone.patch_embed.parameters():
                 param.requires_grad = False
 
