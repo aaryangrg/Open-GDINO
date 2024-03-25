@@ -187,7 +187,7 @@ def main(args):
         _tmp_st = OrderedDict({k:v for k, v in utils.clean_state_dict(checkpoint).items() if check_keep(k, _ignorekeywordlist)})
 
         _ = gdino_backbone.load_state_dict(_tmp_st, strict = False)
-        _ = effvit_backbone.load_state_dict(_tmp_st, strict = False)
+        _ = effvit_backbone.load_state_dict(_tmp_st, strict = False) # Is this function working correctly? (How to confirm?) [run eval]
 
         # For effivit set backbone[1] to effvit.position_embedding (to use the pretrained weights if trained embeddings)
         effvit_backbone.position_embedding = effvit_backbone.backbone[1]
@@ -198,34 +198,42 @@ def main(args):
         # For effivit set backbone[0] to effvit.patch_embed (to use the pretrained patch_embeddings)
         if args.pretrained_patch_embed :
             print("[USING PRETRAINED PATCH EMBEDDINGS]")
+            # This didn't work correctly ? --> missing Layer Norm
             effvit_backbone.patch_embed = effvit_backbone.backbone[0].patch_embed
-            for param in effvit_backbone.patch_embed.paraneters():
+            for param in effvit_backbone.patch_embed.parameters():
                 param.requires_grad = False
 
     # Swin-Transformer without Joiner wrapper (skips position embeds)
     gdino_backbone = gdino_backbone.backbone.backbone 
 
-    print("EFFVIT BACKBONE")
-    print(effvit_backbone.effvit_backbone)
-    print("GDINO BACKBONE")
-    print(gdino_backbone)
+    # print("EFFVIT BACKBONE")
+    # print(effvit_backbone.effvit_backbone)
+    # print("GDINO BACKBONE")
+    # print(gdino_backbone)
+
+   
 
     
-    # logger.debug("build dataset ... ...")
-    # dataset_train = bbuild_dataset_custom(image_set='train', args=args, datasetinfo=dataset_meta["train"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
-    # dataset_val = bbuild_dataset_custom(image_set='val', args=args, datasetinfo=dataset_meta["val"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
-    # logger.debug("build dataset, done.")
+    logger.debug("build dataset ... ...")
+    dataset_train = bbuild_dataset_custom(image_set='train', args=args, datasetinfo=dataset_meta["train"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
+    dataset_val = bbuild_dataset_custom(image_set='val', args=args, datasetinfo=dataset_meta["val"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
+    logger.debug("build dataset, done.")
 
-    # if args.distributed:
-    #     sampler_val = DistributedSampler(dataset_val, shuffle=False)
-    #     sampler_train = DistributedSampler(dataset_train)
-    # else:
-    #     sampler_val = torch.utils.data.SequentialSampler(dataset_val)
-    #     sampler_train = torch.utils.data.RandomSampler(dataset_train)
+    if args.distributed:
+        sampler_val = DistributedSampler(dataset_val, shuffle=False)
+        sampler_train = DistributedSampler(dataset_train)
+    else:
+        sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+        sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
-    # batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
-    # data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 4
-    # data_loader_val = DataLoader(dataset_val, args.eval_batch_size, sampler=sampler_val,drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 8
+    batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
+    data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 4
+    data_loader_val = DataLoader(dataset_val, args.eval_batch_size, sampler=sampler_val,drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 8
+
+    # Ideally we have the same val as expected
+    base_ds = get_coco_api_from_dataset(dataset_val)
+    test_stats, coco_evaluator = evaluate(effvit_backbone, criterion, postprocessors,
+                                              data_loader_val, base_ds, device, args.output_dir, wo_class_error=wo_class_error, args=args)
 
     # metric_logger = MetricLogger(delimiter="  ")
     # metric_logger.add_meter('loss', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
