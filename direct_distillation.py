@@ -203,7 +203,7 @@ def main(args):
             print(effvit_backbone.patch_embed)
             for param in effvit_backbone.patch_embed.parameters():
                 param.requires_grad = False
-
+    print(effvit_backbone.patch_embed)
     # Swin-Transformer without Joiner wrapper (skips position embeds)
     gdino_backbone = gdino_backbone.backbone.backbone 
 
