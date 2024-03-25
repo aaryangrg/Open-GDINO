@@ -198,19 +198,18 @@ def main(args):
         # For effivit set backbone[0] to effvit.patch_embed (to use the pretrained patch_embeddings)
         if args.pretrained_patch_embed :
             print("[USING PRETRAINED PATCH EMBEDDINGS]")
-            # This didn't work correctly ? --> missing Layer Norm
             effvit_backbone.patch_embed = effvit_backbone.backbone.backbone.patch_embed
-            print(effvit_backbone.patch_embed)
             for param in effvit_backbone.patch_embed.parameters():
                 param.requires_grad = False
-    print(effvit_backbone.patch_embed)
     # Swin-Transformer without Joiner wrapper (skips position embeds)
-    gdino_backbone = gdino_backbone.backbone.backbone 
-
     print("EFFVIT BACKBONE")
-    print(effvit_backbone.effvit_backbone)
+    print(effvit_backbone)
     print("GDINO BACKBONE")
     print(gdino_backbone)
+    
+    gdino_backbone = gdino_backbone.backbone.backbone 
+
+    
 
    
 
