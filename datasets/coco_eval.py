@@ -29,7 +29,7 @@ class CocoEvaluator(object):
         self.coco_eval = {}
         for iou_type in iou_types:
             self.coco_eval[iou_type] = COCOeval(coco_gt, iouType=iou_type)
-            self.coco_eval[iou_type].params.iouThrs = np.linspace(.45, 0.95, int(np.round((0.95 - .5) / .05)) + 1, endpoint=True)
+            self.coco_eval[iou_type].params.iouThrs = np.linspace(.50, 0.95, int(np.round((0.95 - .5) / .05)) + 1, endpoint=True)
             self.coco_eval[iou_type].useCats = useCats
 
         self.img_ids = []

@@ -250,7 +250,8 @@ def build_odvg_custom(image_set, args, datasetinfo, custom_transforms, custom_re
         strong_aug = False
     print(img_folder, ann_file, label_map)
     dataset = ODVGDataset(img_folder, ann_file, label_map, max_labels=args.max_labels,
-            transforms=make_coco_transforms_custom(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args, custom_transforms = custom_transforms, custom_res = custom_res), 
+            # transforms=make_coco_transforms_custom(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args, custom_transforms = custom_transforms, custom_res = custom_res), 
+            transforms=make_coco_transforms(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args),
     )
     return dataset
 

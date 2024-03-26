@@ -31,6 +31,7 @@ sys.path.append('/home/aaryang/experiments/Open-GDINO/effvit')
 from effvit.efficientvit.clscore.trainer import ClsRunConfig
 from effvit.efficientvit.apps import setup
 from effvit.efficientvit.clscore.trainer.dino_flexless import GdinoBackboneTrainerNoFlex
+from effivit.efficientvit.models.nn.drop import apply_drop_func
 
 
 
@@ -161,6 +162,7 @@ def main(args):
     gdino_backbone.to(device)
 
     effvit_backbone, criterion, postprocessors = build_groundingdino_with_efficientvit_bb(args, args.effvit_model, args.effvit_model_weights_path)
+    apply_drop_func(effvit_backbone.effvit_backbone.stages, config["backbone_drop"])
     effvit_backbone.to("cuda")
 
     if args.distributed :
@@ -192,10 +194,10 @@ def main(args):
     # Swin-Transformer without Joiner wrapper (skips position embeds)
     gdino_backbone = gdino_backbone.backbone.backbone 
 
-    print("EFFVIT BACKBONE")
-    print(effvit_backbone.effvit_backbone)
-    print("GDINO BACKBONE")
-    print(gdino_backbone)
+    # print("EFFVIT BACKBONE")
+    # print(effvit_backbone.effvit_backbone)
+    # print("GDINO BACKBONE")
+    # print(gdino_backbone)
     
     logger.debug("build dataset ... ...")
     dataset_train = bbuild_dataset_custom(image_set='train', args=args, datasetinfo=dataset_meta["train"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
@@ -239,6 +241,7 @@ def main(args):
         last_gamma=args.last_gamma,
     )
 
+    # Custom weights re-use post initialization
     if args.pretrained_model_path :
         # For effivit set backbone[1] to effvit.position_embedding (to use the pretrained weights if trained embeddings)
         effvit_backbone.position_embedding = effvit_backbone.backbone[1]

@@ -607,7 +607,7 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
         
         effvit_backbone.to("cuda")
         self.effvit_backbone = effvit_backbone
-        self.effvit_backbone.eval()
+        # self.effvit_backbone.eval()
     
         # Set default width multiplier --> 1.0x
         self.effvit_backbone.apply(lambda m: setattr(m, 'width_mult', 1.0))
