@@ -94,6 +94,10 @@ def get_args_parser():
     parser.add_argument("--custom_res", type = int, default = None)
     parser.add_argument("--kd_loss", type = str, default = "ce")
     parser.add_argument("--pretrained_patch_embed", type = bool, default = False)
+
+    # For EfficientViT initialization
+    parser.add_argument("--rand_init", type=str, default="trunc_normal@0.02")
+    parser.add_argument("--last_gamma", type=float, default=0)
     return parser
 
 def build_model_main(args):
@@ -161,7 +165,8 @@ def main(args):
     wo_class_error = False
     gdino_backbone.to(device)
 
-    effvit_backbone, criterion, postprocessors = build_groundingdino_with_efficientvit_bb(args, args.effvit_model, args.effvit_model_weights_path)
+    # Dropout only for CLS Head? Required?
+    effvit_backbone, criterion, postprocessors = build_groundingdino_with_efficientvit_bb(args, args.effvit_model, args.effvit_model_weights_path, dropout=config["net_config"]["dropout"])
     apply_drop_func(effvit_backbone.effvit_backbone.stages, config["backbone_drop"])
     effvit_backbone.to("cuda")
 
@@ -236,7 +241,7 @@ def main(args):
     )
 
     setup.init_model(
-        trainer.network.effvit_backbone, # Need to apply EfficientViT Init only to the backbone
+        trainer.network.effvit_backbone,
         rand_init=args.rand_init,
         last_gamma=args.last_gamma,
     )

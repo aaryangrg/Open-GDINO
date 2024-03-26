@@ -464,6 +464,7 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
         max_text_len=256,
         effvit_model = None,
         effvit_model_weights_path = None,
+        dropout = None,
         position_embedding = None
     ):
         """Initializes the model.
@@ -594,7 +595,7 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
         # Initializing custom trained backbone
 
         if effvit_model == "swint" :
-            effvit_backbone = flexible_efficientvit_backbone_swin_t_224_1k_rectified()
+            effvit_backbone = flexible_efficientvit_backbone_swin_t_224_1k_rectified(dropout = dropout)
         else : #swinb
             effvit_backbone = flexible_efficientvit_backbone_swin_b_384_22k()
         if effvit_model_weights_path :
@@ -1205,7 +1206,7 @@ def build_groundingdino(args):
 
     return model, criterion, postprocessors
 
-def build_groundingdino_with_efficientvit_bb(args, effvit_model, effvit_model_weights_path):
+def build_groundingdino_with_efficientvit_bb(args, effvit_model, effvit_model_weights_path, dropout = None):
     device = torch.device(args.device)
     transformer = build_transformer(args)
     backbone = build_backbone(args)
@@ -1238,6 +1239,7 @@ def build_groundingdino_with_efficientvit_bb(args, effvit_model, effvit_model_we
         max_text_len=args.max_text_len,
         effvit_model = effvit_model,
         effvit_model_weights_path=effvit_model_weights_path,
+        dropout = dropout
         position_embedding = position_embedding
     )
 
