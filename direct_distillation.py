@@ -84,6 +84,7 @@ def get_args_parser():
     # initialization
     parser.add_argument("--rand_init", type=str, default="trunc_normal@0.02")
     parser.add_argument("--last_gamma", type=float, default=0)
+
     parser.add_argument("--auto_restart_thresh", type=float, default=1.0)
     parser.add_argument("--save_freq", type=int, default=1)
     parser.add_argument("--full_flex_train", type = bool , default = False)
@@ -96,8 +97,8 @@ def get_args_parser():
     parser.add_argument("--pretrained_patch_embed", type = bool, default = False)
 
     # For EfficientViT initialization
-    parser.add_argument("--rand_init", type=str, default="trunc_normal@0.02")
-    parser.add_argument("--last_gamma", type=float, default=0)
+    # parser.add_argument("--rand_init", type=str, default="trunc_normal@0.02")
+    # parser.add_argument("--last_gamma", type=float, default=0)
     return parser
 
 def build_model_main(args):
