@@ -189,20 +189,7 @@ def main(args):
         _ = gdino_backbone.load_state_dict(_tmp_st, strict = False)
         _ = effvit_backbone.load_state_dict(_tmp_st, strict = False) # Is this function working correctly? (How to confirm?) [run eval]
 
-        # For effivit set backbone[1] to effvit.position_embedding (to use the pretrained weights if trained embeddings)
-        effvit_backbone.position_embedding = effvit_backbone.backbone[1]
-        for param in effvit_backbone.position_embedding.parameters():
-            param.requires_grad = False
-        print("[USING PRETRAINED POSITION EMBEDDINGS FOR BACKBONE]")
-        
-        # For effivit set backbone[0] to effvit.patch_embed (to use the pretrained patch_embeddings)
-        if args.pretrained_patch_embed :
-            print("[USING PRETRAINED PATCH EMBEDDINGS]")
-            effvit_backbone.patch_embed = effvit_backbone.backbone.backbone.patch_embed
-            for param in effvit_backbone.patch_embed.parameters():
-                param.requires_grad = False
     # Swin-Transformer without Joiner wrapper (skips position embeds)
-
     gdino_backbone = gdino_backbone.backbone.backbone 
 
     print("EFFVIT BACKBONE")
@@ -251,6 +238,20 @@ def main(args):
         rand_init=args.rand_init,
         last_gamma=args.last_gamma,
     )
+
+    if args.pretrained_model_path :
+        # For effivit set backbone[1] to effvit.position_embedding (to use the pretrained weights if trained embeddings)
+        effvit_backbone.position_embedding = effvit_backbone.backbone[1]
+        for param in effvit_backbone.position_embedding.parameters():
+            param.requires_grad = False
+        print("[USING PRETRAINED POSITION EMBEDDINGS FOR BACKBONE]")
+        
+        # For effivit set backbone[0] to effvit.patch_embed (to use the pretrained patch_embeddings)
+        if args.pretrained_patch_embed :
+            print("[USING PRETRAINED PATCH EMBEDDINGS]")
+            effvit_backbone.patch_embed = effvit_backbone.backbone.backbone.patch_embed
+            for param in effvit_backbone.patch_embed.parameters():
+                param.requires_grad = False
 
     trainer.prep_for_training_custom(run_config, config["ema_decay"], args.fp16)
 
