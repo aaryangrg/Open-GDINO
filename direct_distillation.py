@@ -248,7 +248,7 @@ def main(args):
     )
 
     # Custom weights re-use post initialization
-    if args.pretrained_model_path :
+    if args.pretrain_model_path :
         # For effivit set backbone[1] to effvit.position_embedding (to use the pretrained weights if trained embeddings)
         effvit_backbone.position_embedding = effvit_backbone.backbone[1]
         for param in effvit_backbone.position_embedding.parameters():
