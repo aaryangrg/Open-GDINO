@@ -15,7 +15,7 @@ export TOKENIZERS_PARALLELISM=false
 export MASTER_PORT=99
 nvidia-smi
 
-python3 -m torch.distributed.launch  --nproc_per_node 2  ../direct_distillation.py \
+python3 -m torch.distributed.launch  --nproc_per_node 2 --master_port=29501 ../direct_distillation.py \
     --config_file ../config/cfg_odvg.py \
     --pretrain_model_path ../weights/gdinot-coco-ft.pth \
     --output_dir ../results/backbone_distillation/test_pretrained_patch_layer_norm/ \
