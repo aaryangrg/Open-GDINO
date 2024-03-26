@@ -1239,7 +1239,7 @@ def build_groundingdino_with_efficientvit_bb(args, effvit_model, effvit_model_we
         max_text_len=args.max_text_len,
         effvit_model = effvit_model,
         effvit_model_weights_path=effvit_model_weights_path,
-        dropout = dropout
+        dropout = dropout,
         position_embedding = position_embedding
     )
 
