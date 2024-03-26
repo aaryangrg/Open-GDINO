@@ -575,6 +575,7 @@ class SwinTransformer(nn.Module):
 
         # absolute position embedding
         if self.ape:
+            print("[USING APE]")
             pretrain_img_size = to_2tuple(pretrain_img_size)
             patch_size = to_2tuple(patch_size)
             patches_resolution = [

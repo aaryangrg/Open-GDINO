@@ -261,7 +261,7 @@ def main(args):
     base_ds = get_coco_api_from_dataset(dataset_val)
 
     # Performs initial write?
-    trainer.sync_model()
+    # trainer.sync_model()
 
     output_dir = Path(args.output_dir)
     trainer.train(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
