@@ -31,7 +31,7 @@ sys.path.append('/home/aaryang/experiments/Open-GDINO/effvit')
 from effvit.efficientvit.clscore.trainer import ClsRunConfig
 from effvit.efficientvit.apps import setup
 from effvit.efficientvit.clscore.trainer.dino_flexless import GdinoBackboneTrainerNoFlex
-from effivit.efficientvit.models.nn.drop import apply_drop_func
+from effvit.efficientvit.models.nn.drop import apply_drop_func
 
 
 
