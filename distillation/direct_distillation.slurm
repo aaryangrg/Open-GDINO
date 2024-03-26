@@ -12,7 +12,7 @@ conda activate opdino
 
 echo CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES
 export TOKENIZERS_PARALLELISM=false
-
+export MASTER_PORT=99
 nvidia-smi
 
 python3 -m torch.distributed.launch  --nproc_per_node 2  ../direct_distillation.py \
