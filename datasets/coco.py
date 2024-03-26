@@ -722,7 +722,8 @@ def build_custom(image_set, args, datasetinfo, custom_transforms, custom_res):
         strong_aug = False
     print(img_folder, ann_file)
     dataset = CocoDetection(img_folder, ann_file, 
-            transforms=make_coco_transforms_custom(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args, custom_transforms = custom_transforms, custom_res= custom_res), 
+            # transforms=make_coco_transforms_custom(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args, custom_transforms = custom_transforms, custom_res= custom_res), 
+            make_coco_transforms(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args),
             return_masks=args.masks,
             aux_target_hacks=None,
         )

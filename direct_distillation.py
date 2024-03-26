@@ -217,8 +217,8 @@ def main(args):
 
     # Ideally we have the same val as expected
     base_ds = get_coco_api_from_dataset(dataset_val)
-    test_stats, coco_evaluator = evaluate(effvit_backbone, criterion, postprocessors,
-                                              data_loader_val, base_ds, device, args.output_dir, wo_class_error=wo_class_error, args=args)
+    # test_stats, coco_evaluator = evaluate(effvit_backbone, criterion, postprocessors,
+    #                                           data_loader_val, base_ds, device, args.output_dir, wo_class_error=wo_class_error, args=args)
 
     metric_logger = MetricLogger(delimiter="  ")
     metric_logger.add_meter('loss', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
