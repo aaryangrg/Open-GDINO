@@ -19,6 +19,7 @@ python -m torch.distributed.launch  --nproc_per_node 2 ../main.py \
         -c ../config/cfg_odvg_train.py \
         --datasets ../config/coco_od_new.json \
         --pretrain_model_path ../weights/groundingdino_swint_ogc.pth \
+        --distributed true
 
     
 
