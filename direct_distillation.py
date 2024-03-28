@@ -7,7 +7,7 @@ import random
 import time
 from pathlib import Path
 import os, sys
-from models.GroundingDINO.groundingdino import GroundingDINOwithEfficientViTBB, build_groundingdino_with_efficientvit_bb
+
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, DistributedSampler
@@ -23,7 +23,7 @@ import datasets
 from datasets import bbuild_dataset, bbuild_dataset_custom, get_coco_api_from_dataset
 from engine import evaluate, evaluate_custom, train_one_epoch
 import torch.distributed as dist
-
+from models.GroundingDINO.groundingdino import GroundingDINOwithEfficientViTBB, build_groundingdino_with_efficientvit_bb
 from groundingdino.util.utils import clean_state_dict
 
 #EfficientViT Imports

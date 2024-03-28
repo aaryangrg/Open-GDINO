@@ -97,7 +97,7 @@ def resize(image, target, size, max_size=None):
         return (oh, ow)
 
     def get_size(image_size, size, max_size=None):
-        if isinstance(size, (list, tuple)):
+        if isinstance(size, (list, tuple)): # For validation, this is a single value
             return size[::-1]
         else:
             return get_size_with_aspect_ratio(image_size, size, max_size)
@@ -248,12 +248,12 @@ class RandomHorizontalFlip(object):
 class RandomResize(object):
     def __init__(self, sizes, max_size=None):
         assert isinstance(sizes, (list, tuple))
-        self.sizes = sizes
-        self.max_size = max_size
+        self.sizes = sizes # For val --> [v1]
+        self.max_size = max_size # v2
 
     def __call__(self, img, target=None):
-        size = random.choice(self.sizes)
-        return resize(img, target, size, self.max_size)
+        size = random.choice(self.sizes) # v1
+        return resize(img, target, size, self.max_size) # validation resolution is not fixed.. (Required for BN reset)
     
 
 class RandomResizeCustom(object) :

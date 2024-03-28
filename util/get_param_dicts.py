@@ -51,6 +51,27 @@ def get_param_dict(args, model_without_ddp: nn.Module):
             }
         ]        
         return param_dicts
+    
+    if param_dict_type == 'ddetr_in_mmdet_effvit':
+        param_dicts = [
+            {
+                "params":
+                    [p for n, p in model_without_ddp.named_parameters()
+                        if not match_name_keywords(n, args.lr_backbone_names) and not match_name_keywords(n, args.lr_linear_proj_names) and p.requires_grad],
+                "lr": args.lr,
+            },
+            {
+                "params": [p for n, p in model_without_ddp.named_parameters() 
+                        if match_name_keywords(n, args.lr_backbone_names) and p.requires_grad],
+                "lr": args.lr_backbone,
+            },
+            {
+                "params": [p for n, p in model_without_ddp.named_parameters() 
+                        if match_name_keywords(n, args.lr_linear_proj_names) and p.requires_grad],
+                "lr": args.lr_linear_proj_mult,
+            }
+        ]        
+        return param_dicts
 
     if param_dict_type == 'large_wd':
         param_dicts = [

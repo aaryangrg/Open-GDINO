@@ -22,6 +22,14 @@ from datasets import bbuild_dataset, get_coco_api_from_dataset
 from engine import evaluate, train_one_epoch
 
 from groundingdino.util.utils import clean_state_dict
+from models.GroundingDINO.groundingdino import GroundingDINOwithEfficientViTBB, build_groundingdino_with_efficientvit_bb
+
+#EfficientViT Imports
+sys.path.append('/home/aaryang/experiments/Open-GDINO/effvit')
+from effvit.efficientvit.clscore.trainer import ClsRunConfig
+from effvit.efficientvit.apps import setup
+from effvit.efficientvit.clscore.trainer.dino_flexless import GdinoBackboneTrainerNoFlex
+from effvit.efficientvit.models.nn.drop import apply_drop_func
 
 
 def get_args_parser():
@@ -144,11 +152,14 @@ def main(args):
 
 
     logger.debug("build model ... ...")
-    model, criterion, postprocessors = build_model_main(args)
+    # model, criterion, postprocessors = build_model_main(args)
     wo_class_error = False
-    model.to(device)
+    # model.to(device)
     logger.debug("build model, done.")
 
+    model, criterion, postprocessors = build_groundingdino_with_efficientvit_bb(args, args.effvit_model, args.effvit_model_weights_path, dropout=config["net_config"]["dropout"])
+    apply_drop_func(model.effvit_backbone.stages, config["backbone_drop"])
+    model.to("cuda")
 
     model_without_ddp = model
     if args.distributed:
@@ -261,11 +272,29 @@ def main(args):
         _load_output = model_without_ddp.load_state_dict(_tmp_st, strict=False)
         logger.info(str(_load_output))
 
+    # Initialize EfficientViT model with correct init weights
+    # setup.init_model(
+    #     trainer.network.effvit_backbone,
+    #     rand_init=args.rand_init,
+    #     last_gamma=args.last_gamma,
+    # )
     
-    # if args.profile :
-    #     for i in range(len(images)) :
-    #         model(images[i])
+    # if args.pretrain_model_path :
+    #     # For effivit set backbone[1] to effvit.position_embedding (to use the pretrained weights if trained embeddings)
+    #     effvit_backbone.position_embedding = effvit_backbone.backbone[1]
+    #     for param in effvit_backbone.position_embedding.parameters():
+    #         param.requires_grad = False
+    #     print("[USING PRETRAINED POSITION EMBEDDINGS FOR BACKBONE]")
+        
+    #     # For effivit set backbone[0] to effvit.patch_embed (to use the pretrained patch_embeddings)
+    #     if args.pretrained_patch_embed :
+    #         print("[USING PRETRAINED PATCH EMBEDDINGS]")
+    #         effvit_backbone.patch_embed = effvit_backbone.backbone.backbone.patch_embed
+    #         for param in effvit_backbone.patch_embed.parameters():
+    #             param.requires_grad = False
     
+    # trainer.prep_for_training_custom(run_config, config["ema_decay"], args.fp16)
+    # What to do about ema_decay?
     if args.eval:
         os.environ['EVAL_FLAG'] = 'TRUE'
         test_stats, coco_evaluator = evaluate(model, criterion, postprocessors,

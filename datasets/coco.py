@@ -550,8 +550,12 @@ def make_coco_transforms(image_set, fix_size=False, strong_aug=False, args=None,
             ])   
 
         if not custom_val_transforms : # Original transforms
+            # return T.Compose([
+            #     T.RandomResize([max(scales)], max_size=max_size),
+            #     normalize,
+            # ])
             return T.Compose([
-                T.RandomResize([max(scales)], max_size=max_size),
+                T.RandomResizeCustom([max(scales)], max_size=max_size),
                 normalize,
             ])
         elif custom_val_transforms == "crop" :
