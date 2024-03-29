@@ -229,11 +229,13 @@ def main(args):
     metric_logger = MetricLogger(delimiter="  ")
     metric_logger.add_meter('loss', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
 
+    # Running smoke test!
     trainer = GdinoBackboneTrainerNoFlex(
         path=args.path,
         effvit_dino=effvit_backbone,
         gdino_backbone = gdino_backbone,
-        data_provider=data_loader_train,
+        # data_provider=data_loader_train,
+        data_provider = data_loader_val,
         auto_restart_thresh=args.auto_restart_thresh,
         metric_logger = metric_logger,
         train_full_flexible_model = args.full_flex_train,

@@ -10,7 +10,7 @@
   "val": [
     {
       "root": "/home/c3-0/datasets/COCO/val2017",
-      "anno": "/home/aaryang/experiments/Open-GDINO/config/instances_val2017_new.json",
+      "anno": "/home/aaryang/experiments/Open-GDINO/config/instances_val2017_single.json",
       "label_map": null,
       "dataset_mode": "coco"
     }
