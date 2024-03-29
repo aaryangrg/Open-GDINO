@@ -29,7 +29,8 @@ python3 -m torch.distributed.launch  --nproc_per_node 2 --master_port=29533 ../d
     --custom_transforms resize \
     --custom_res 480 \
     --kd_loss l2 \
-    --pretrained_patch_embed true
+    --pretrained_patch_embed true \
+    --fix_size
 
 # output_dir --> GDINO logs
 # path --> model checkpoints + Effvit logs
