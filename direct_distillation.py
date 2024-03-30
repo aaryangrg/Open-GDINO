@@ -95,6 +95,7 @@ def get_args_parser():
     parser.add_argument("--custom_res", type = int, default = None)
     parser.add_argument("--kd_loss", type = str, default = "ce")
     parser.add_argument("--pretrained_patch_embed", type = bool, default = False)
+    parser.add_argument("--with_task_loss", type = bool, default = False)
 
     # For EfficientViT initialization
     # parser.add_argument("--rand_init", type=str, default="trunc_normal@0.02")
@@ -250,11 +251,11 @@ def main(args):
         last_gamma=args.last_gamma,
     )
 
-    # EfficientViT param freeze (all except params in effvitbackbone custom)
-    # for param in effvit_backbone.parameters():
-    #     param.requires_grad = False
-    # for param in effvit_backbone.effvit_backbone.parameters():
-    #     param.requires_grad = True
+    if args.with_task_loss :
+        for param in effvit_backbone.parameters(): # Freeze all
+            param.requires_grad = False
+        for param in effvit_backbone.effvit_backbone.parameters(): # Unfreeze backbone
+            param.requires_grad = True
 
     # Custom weights re-use post initialization
     if args.pretrain_model_path :
@@ -279,8 +280,11 @@ def main(args):
     # trainer.sync_model()
 
     output_dir = Path(args.output_dir)
-    trainer.train(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
-    # trainer.train_task(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
+    if not args.with_task_loss :
+        trainer.train(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
+    else :
+        print("[USING TASK LOSS + KD LOSS]")
+        trainer.train_task(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('DETR training and evaluation script', parents=[get_args_parser()])
