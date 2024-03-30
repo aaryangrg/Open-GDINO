@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --account=group3
-#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/backbone_distillation/test_pretrained_patch_layer_norm_480.out
+#SBATCH --output=/home/aaryang/experiments/Open-GDINO/outs/backbone_distillation/long_train.out
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:2   # And two GPU
-#SBATCH --cpus-per-task=8           # Two cores per task
-#SBATCH --job-name=FPDist
+#SBATCH --cpus-per-task=18           # Two cores per task
+#SBATCH --job-name=DistPart
 #SBATCH --constraint=gmem32
 
 source /home/aaryang/anaconda3/bin/activate
@@ -18,13 +18,13 @@ nvidia-smi
 python3 -m torch.distributed.launch  --nproc_per_node 2 --master_port=29533 ../direct_distillation.py \
     --config_file ../config/cfg_odvg.py \
     --pretrain_model_path ../weights/gdinot-coco-ft.pth \
-    --output_dir ../results/backbone_distillation/test_pretrained_patch_layer_norm_480/ \
-    --datasets ../config/coco_od_new.json \
+    --output_dir ../results/backbone_distillation/long_train/ \
+    --datasets ../config/single_class/conf.json \
     --config ../effvit/configs/cls/imagenet/b1.yaml \
-    --path ../experiments/backbone_distillation/test_pretrained_patch_layer_norm_480/ \
+    --path ../experiments/backbone_distillation/long_train/ \
     --distributed  true \
     --fp16 \
-    --eval_batch_size 20 \
+    --eval_batch_size 18 \
     --effvit_model swint \
     --custom_transforms resize \
     --custom_res 480 \

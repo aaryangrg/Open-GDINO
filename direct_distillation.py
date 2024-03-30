@@ -212,8 +212,8 @@ def main(args):
         sampler_val = torch.utils.data.SequentialSampler(dataset_val)
         sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
-    # batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
-    batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, 1, drop_last=True)
+    batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
+    # batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, 1, drop_last=True)
     data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 4
     data_loader_val = DataLoader(dataset_val, args.eval_batch_size, sampler=sampler_val,drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 8
 
@@ -251,10 +251,10 @@ def main(args):
     )
 
     # EfficientViT param freeze (all except params in effvitbackbone custom)
-    for param in effvit_backbone.parameters():
-        param.requires_grad = False
-    for param in effvit_backbone.effvit_backbone.parameters():
-        param.requires_grad = True
+    # for param in effvit_backbone.parameters():
+    #     param.requires_grad = False
+    # for param in effvit_backbone.effvit_backbone.parameters():
+    #     param.requires_grad = True
 
     # Custom weights re-use post initialization
     if args.pretrain_model_path :
@@ -279,8 +279,8 @@ def main(args):
     # trainer.sync_model()
 
     output_dir = Path(args.output_dir)
-    # trainer.train(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
-    trainer.train_task(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_train, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
+    trainer.train(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
+    # trainer.train_task(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('DETR training and evaluation script', parents=[get_args_parser()])
