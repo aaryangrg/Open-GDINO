@@ -2,7 +2,7 @@
   "train": [
     {
       "root": "/home/c3-0/datasets/COCO/train2017",
-      "anno": "/home/aaryang/experiments/Open-GDINO/config/coco2017_train_odvg_new.jsonl",
+      "anno": "/home/aaryang/experiments/Open-GDINO/config/coco_train_ten.jsonl",
       "label_map": "/home/aaryang/experiments/Open-GDINO/config/coco2017_label_map.json",
       "dataset_mode": "odvg"
     }

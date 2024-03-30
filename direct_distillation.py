@@ -233,8 +233,8 @@ def main(args):
         path=args.path,
         effvit_dino=effvit_backbone,
         gdino_backbone = gdino_backbone,
-        # data_provider=data_loader_train,
-        data_provider = data_loader_val,
+        data_provider=data_loader_train,
+        # data_provider = data_loader_val,
         auto_restart_thresh=args.auto_restart_thresh,
         metric_logger = metric_logger,
         train_full_flexible_model = args.full_flex_train,
@@ -279,7 +279,7 @@ def main(args):
 
     output_dir = Path(args.output_dir)
     # trainer.train(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
-    trainer.train_task(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
+    trainer.train_task(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_train, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('DETR training and evaluation script', parents=[get_args_parser()])
