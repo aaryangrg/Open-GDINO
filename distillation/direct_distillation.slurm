@@ -19,7 +19,7 @@ python3 -m torch.distributed.launch  --nproc_per_node 2 --master_port=29533 ../d
     --config_file ../config/cfg_odvg.py \
     --pretrain_model_path ../weights/gdinot-coco-ft.pth \
     --output_dir ../results/backbone_distillation/long_train/ \
-    --datasets ../config/single_class/conf.json \
+    --datasets ../config/coco_od_new.json \
     --config ../effvit/configs/cls/imagenet/b1.yaml \
     --path ../experiments/backbone_distillation/long_train/ \
     --distributed  true \
