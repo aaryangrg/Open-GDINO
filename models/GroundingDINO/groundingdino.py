@@ -791,7 +791,7 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
             out['interm_outputs'] = {'pred_logits': interm_class, 'pred_boxes': interm_coord}
             out['interm_outputs_for_matching_pre'] = {'pred_logits': interm_class, 'pred_boxes': init_box_proposal}
 
-        return out
+        return effvit_features, out
 
     @torch.jit.unused
     def _set_aux_loss(self, outputs_class, outputs_coord):

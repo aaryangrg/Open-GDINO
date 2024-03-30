@@ -199,11 +199,6 @@ def main(args):
 
     # Swin-Transformer without Joiner wrapper (skips position embeds)
     gdino_backbone = gdino_backbone.backbone.backbone 
-
-    # print("EFFVIT BACKBONE")
-    # print(effvit_backbone.effvit_backbone)
-    # print("GDINO BACKBONE")
-    # print(gdino_backbone)
     
     logger.debug("build dataset ... ...")
     dataset_train = bbuild_dataset_custom(image_set='train', args=args, datasetinfo=dataset_meta["train"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
@@ -229,7 +224,11 @@ def main(args):
     metric_logger = MetricLogger(delimiter="  ")
     metric_logger.add_meter('loss', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
 
-    # Running smoke test!
+
+    #Official Backbone param freeze
+    for param in gdino_backbone.parameters():
+        param.requires_grad = False
+
     trainer = GdinoBackboneTrainerNoFlex(
         path=args.path,
         effvit_dino=effvit_backbone,
@@ -240,7 +239,8 @@ def main(args):
         metric_logger = metric_logger,
         train_full_flexible_model = args.full_flex_train,
         fp16_training = args.fp16,
-        kd_metric = args.kd_loss
+        kd_metric = args.kd_loss,
+        task_criterion = criterion
     )
 
     setup.init_model(
@@ -248,6 +248,12 @@ def main(args):
         rand_init=args.rand_init,
         last_gamma=args.last_gamma,
     )
+
+    # EfficientViT param freeze (all except params in effvitbackbone custom)
+    for param in effvit_backbone.parameters():
+        param.requires_grad = False
+    for param in effvit_backbone.effvit_backbone.parameters():
+        param.requires_grad = True
 
     # Custom weights re-use post initialization
     if args.pretrain_model_path :
@@ -272,7 +278,8 @@ def main(args):
     # trainer.sync_model()
 
     output_dir = Path(args.output_dir)
-    trainer.train(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
+    # trainer.train(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
+    trainer.train_task(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('DETR training and evaluation script', parents=[get_args_parser()])

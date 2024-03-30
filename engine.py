@@ -405,7 +405,7 @@ def evaluate_custom(model, criterion, postprocessors, data_loader, base_ds, devi
         bs = samples.tensors.shape[0]
         input_captions = [caption] * bs
         with torch.cuda.amp.autocast(enabled=args.amp):
-            outputs = model(samples, captions=input_captions)
+            bb_features, outputs = model(samples, captions=input_captions)
 
 
         orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
