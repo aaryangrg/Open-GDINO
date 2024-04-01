@@ -60,7 +60,7 @@ from benchmark_segments import flop_count
 import sys 
 
 sys.path.append('/home/aaryang/experiments/Open-GDINO/effvit')
-from effvit.efficientvit.models.efficientvit.dino_backbone import flexible_efficientvit_backbone_swin_t_224_1k_rectified, flexible_efficientvit_backbone_swin_b_384_22k
+from effvit.efficientvit.models.efficientvit.dino_backbone import flexible_efficientvit_backbone_swin_t_224_1k_v1, flexible_efficientvit_backbone_swin_b_384_22k
 from efficientvit.models.utils import load_state_dict_from_file
 
 
@@ -595,7 +595,7 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
         # Initializing custom trained backbone
 
         if effvit_model == "swint" :
-            effvit_backbone = flexible_efficientvit_backbone_swin_t_224_1k_rectified(dropout = dropout)
+            effvit_backbone = flexible_efficientvit_backbone_swin_t_224_1k_v1(dropout = dropout)
         else : #swinb
             effvit_backbone = flexible_efficientvit_backbone_swin_b_384_22k()
         if effvit_model_weights_path :
@@ -611,7 +611,8 @@ class GroundingDINOwithEfficientViTBB(nn.Module):
         # self.effvit_backbone.eval()
     
         # Set default width multiplier --> 1.0x
-        self.effvit_backbone.apply(lambda m: setattr(m, 'width_mult', 1.0))
+        with torch.no_grad() :
+            self.effvit_backbone.apply(lambda m: setattr(m, 'width_mult', 1.0))
 
         self.position_embedding = position_embedding
 
