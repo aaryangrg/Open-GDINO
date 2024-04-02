@@ -23,6 +23,7 @@ import datasets
 from datasets import bbuild_dataset, bbuild_dataset_custom, get_coco_api_from_dataset
 from engine import evaluate, evaluate_custom, train_one_epoch
 import torch.distributed as dist
+from torch.utils.tensorboard.writer import SummaryWriter
 from models.GroundingDINO.groundingdino import GroundingDINOwithEfficientViTBB, build_groundingdino_with_efficientvit_bb
 from groundingdino.util.utils import clean_state_dict
 
@@ -33,6 +34,25 @@ from effvit.efficientvit.apps import setup
 from effvit.efficientvit.clscore.trainer.dino_flexless import GdinoBackboneTrainerNoFlex
 from effvit.efficientvit.models.nn.drop import apply_drop_func
 
+
+def create_writer(experiment_name: str, 
+                  model_name: str, 
+                  extra: str=None):
+    from datetime import datetime
+    import os
+
+    # model variant (V1, V2, V3) - experimentname (dataset, loss ratio / losses, batch, LR & Optim / other configs) - extra (Date not required?)
+
+    timestamp = datetime.now().strftime("%Y-%m-%d")
+
+    if extra:
+        # Create log directory path
+        log_dir = os.path.join("runs", model_name, experiment_name, extra, timestamp)
+    else:
+        log_dir = os.path.join("runs", model_name, experiment_name, timestamp)
+        
+    print(f"[INFO] Created SummaryWriter, saving to: {log_dir}...")
+    return SummaryWriter(log_dir=log_dir)
 
 
 def get_args_parser():
@@ -81,9 +101,6 @@ def get_args_parser():
     parser.add_argument("--manual_seed", type=int, default=0)
     # parser.add_argument("--resume", action="store_true")
     parser.add_argument("--fp16", action="store_true")
-    # initialization
-    parser.add_argument("--rand_init", type=str, default="trunc_normal@0.02")
-    parser.add_argument("--last_gamma", type=float, default=0)
 
     parser.add_argument("--auto_restart_thresh", type=float, default=1.0)
     parser.add_argument("--save_freq", type=int, default=1)
@@ -97,9 +114,15 @@ def get_args_parser():
     parser.add_argument("--pretrained_patch_embed", type = bool, default = False)
     parser.add_argument("--with_task_loss", type = bool, default = False)
 
-    # For EfficientViT initialization
-    # parser.add_argument("--rand_init", type=str, default="trunc_normal@0.02")
-    # parser.add_argument("--last_gamma", type=float, default=0)
+    # EfficientViT Model weights init
+    parser.add_argument("--rand_init", type=str, default="trunc_normal@0.02")
+    parser.add_argument("--last_gamma", type=float, default=0)
+
+    # Tensorboard log dir init
+    parser.add_argument("--model_version_tb", type = str, default = None) # effvit-v1 / effvit-v2 / effvit-v3 etc.
+    parser.add_argument("--experiment_name_tb", type = str, default = None) # 8_cls_task_kld_effvit_configs_16batch_500epochs
+    parser.add_argument("--extra_tb", type = str, default = None) # fp32 / fp16 (if required)
+
     return parser
 
 def build_model_main(args):
@@ -231,6 +254,11 @@ def main(args):
     for param in gdino_backbone.parameters():
         param.requires_grad = False
 
+    # Create experiment log writer
+    writer = None
+    if args.args.experiment_name_tb and  args.model_version_tb :
+        writer = create_writer(args.experiment_name_tb, args.model_version_tb, args.extra_tb)
+
     trainer = GdinoBackboneTrainerNoFlex(
         path=args.path,
         effvit_dino=effvit_backbone,
@@ -242,7 +270,8 @@ def main(args):
         train_full_flexible_model = args.full_flex_train,
         fp16_training = args.fp16,
         kd_metric = args.kd_loss,
-        task_criterion = criterion
+        task_criterion = criterion,
+        writer = writer
     )
 
     setup.init_model(
@@ -274,10 +303,9 @@ def main(args):
 
     trainer.prep_for_training_custom(run_config, config["ema_decay"], args.fp16)
 
-    base_ds = get_coco_api_from_dataset(dataset_val)
+    effvit_backbone.backbone = None # Not required after init
 
-    # Performs initial write?
-    # trainer.sync_model()
+    base_ds = get_coco_api_from_dataset(dataset_val)
 
     output_dir = Path(args.output_dir)
     if not args.with_task_loss :
@@ -285,6 +313,10 @@ def main(args):
     else :
         print("[USING TASK LOSS + KD LOSS]")
         trainer.train_task(save_freq=args.save_freq, criterion = criterion, postprocessors = postprocessors, data_loader_val = data_loader_val, base_ds = base_ds, args = args, evaluate_custom = evaluate_custom)
+
+    if writer :
+        writer.flush()
+        writer.close()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('DETR training and evaluation script', parents=[get_args_parser()])
