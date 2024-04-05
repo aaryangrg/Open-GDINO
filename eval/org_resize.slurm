@@ -44,7 +44,7 @@ python3 ../custom_eval.py \
     --eval \
     --eval_batch 10 \
     --custom_transform resize \
-    --custom_res 480
+    --custom_res 224
 
 echo "FINE-TUNED MODEL"
 python3 ../custom_eval.py \
@@ -55,4 +55,4 @@ python3 ../custom_eval.py \
     --eval \
     --eval_batch 10 \
     --custom_transform resize \
-    --custom_res 480
+    --custom_res 224
