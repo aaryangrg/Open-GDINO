@@ -110,7 +110,7 @@ def get_args_parser():
     parser.add_argument("--effvit_model_weights_path", type = str, default = None)
     parser.add_argument("--custom_transforms", type = str, default = None)
     parser.add_argument("--custom_res", type = int, default = None)
-    parser.add_argument("--kd_loss", type = str, default = "ce")
+    parser.add_argument("--kd_loss", type = str, default = None)
     parser.add_argument("--pretrained_patch_embed", type = bool, default = False)
     parser.add_argument("--with_task_loss", type = bool, default = False)
 
