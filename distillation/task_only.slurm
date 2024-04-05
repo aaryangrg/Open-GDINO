@@ -29,6 +29,7 @@ python3 -m torch.distributed.launch  --nproc_per_node 2 --master_port=29529 ../d
     --custom_transforms resize \
     --custom_res 480 \
     --pretrained_patch_embed true \
+    --with_task_loss true \
     --model_version_tb  effvit-v3 \
     --experiment_name_tb  task_only_b24_480res_datasubset_effvit_configs \
     --train_batch_size 12
