@@ -169,17 +169,11 @@ def make_coco_transforms(image_set, fix_size=False, strong_aug=False, args=None)
 
     if image_set == 'train':
         if fix_size:
-            # return T.Compose([
-            #     T.RandomHorizontalFlip(),
-            #     T.RandomResize([(max_size, max(scales))]),
-            #     normalize,
-            # ])
             return T.Compose([
                 T.RandomHorizontalFlip(),
-                T.RandomResizeCustom([480], max_size=max_size),
+                T.RandomResize([(max_size, max(scales))]),
                 normalize,
             ])
-
         if strong_aug:
             import datasets.sltransform as SLT
             
@@ -224,18 +218,11 @@ def make_coco_transforms(image_set, fix_size=False, strong_aug=False, args=None)
                 normalize,
             ])   
 
-        # return T.Compose([
-        #     T.RandomResize([max(scales)], max_size=max_size),
-        #     normalize,
-        # ])
-        # return T.Compose([
-        #         T.RandomResizeCustom([480], max_size=max_size),
-        #         normalize,
-        #     ])
         return T.Compose([
-                T.RandomResizeCustom([480], max_size=max_size),
-                normalize,
-            ])
+            T.RandomResize([max(scales)], max_size=max_size),
+            normalize,
+        ])
+
 
     raise ValueError(f'unknown {image_set}')
 
@@ -263,8 +250,7 @@ def build_odvg_custom(image_set, args, datasetinfo, custom_transforms, custom_re
         strong_aug = False
     print(img_folder, ann_file, label_map)
     dataset = ODVGDataset(img_folder, ann_file, label_map, max_labels=args.max_labels,
-            # transforms=make_coco_transforms_custom(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args, custom_transforms = custom_transforms, custom_res = custom_res), 
-            transforms=make_coco_transforms(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args),
+            transforms=make_coco_transforms_custom(image_set, fix_size=args.fix_size, strong_aug=strong_aug, args=args, custom_transforms = custom_transforms, custom_res = custom_res), 
     )
     return dataset
 

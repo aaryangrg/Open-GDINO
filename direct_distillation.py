@@ -123,6 +123,8 @@ def get_args_parser():
     parser.add_argument("--experiment_name_tb", type = str, default = None) # 8_cls_task_kld_effvit_configs_16batch_500epochs
     parser.add_argument("--extra_tb", type = str, default = None) # fp32 / fp16 (if required)
 
+    parser.add_argument("--train_batch_size", type = int, default = 8)
+
     return parser
 
 def build_model_main(args):
@@ -180,6 +182,7 @@ def main(args):
     np.random.seed(seed)
     random.seed(seed)
 
+    args.batch_size = args.train_batch_size # Over-ride train batch size
 
     # EfficientViT Args parse + setup
     #setup unknown args --> effvit
@@ -225,6 +228,7 @@ def main(args):
     gdino_backbone = gdino_backbone.backbone.backbone 
     
     logger.debug("build dataset ... ...")
+    print("RESOLUTION : ", args.custom_res)
     dataset_train = bbuild_dataset_custom(image_set='train', args=args, datasetinfo=dataset_meta["train"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
     dataset_val = bbuild_dataset_custom(image_set='val', args=args, datasetinfo=dataset_meta["val"][0], custom_transforms=args.custom_transforms, custom_res = [args.custom_res])
     logger.debug("build dataset, done.")
@@ -237,26 +241,21 @@ def main(args):
         sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
     batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
-    # batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, 1, drop_last=True)
     data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 4
     data_loader_val = DataLoader(dataset_val, args.eval_batch_size, sampler=sampler_val,drop_last=False, collate_fn=utils.collate_fn, num_workers=args.num_workers) # default = 8
 
-    # Ideally we have the same val as expected
     base_ds = get_coco_api_from_dataset(dataset_val)
-    # test_stats, coco_evaluator = evaluate(effvit_backbone, criterion, postprocessors,
-    #                                           data_loader_val, base_ds, device, args.output_dir, wo_class_error=wo_class_error, args=args)
 
     metric_logger = MetricLogger(delimiter="  ")
     metric_logger.add_meter('loss', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
-
 
     #Official Backbone param freeze
     for param in gdino_backbone.parameters():
         param.requires_grad = False
 
-    # Create experiment log writer
+    # Tensor-boards
     writer = None
-    if args.args.experiment_name_tb and  args.model_version_tb :
+    if args.experiment_name_tb and  args.model_version_tb :
         writer = create_writer(args.experiment_name_tb, args.model_version_tb, args.extra_tb)
 
     trainer = GdinoBackboneTrainerNoFlex(
@@ -264,7 +263,6 @@ def main(args):
         effvit_dino=effvit_backbone,
         gdino_backbone = gdino_backbone,
         data_provider=data_loader_train,
-        # data_provider = data_loader_val,
         auto_restart_thresh=args.auto_restart_thresh,
         metric_logger = metric_logger,
         train_full_flexible_model = args.full_flex_train,
@@ -303,7 +301,7 @@ def main(args):
 
     trainer.prep_for_training_custom(run_config, config["ema_decay"], args.fp16)
 
-    effvit_backbone.backbone = None # Not required after init
+    effvit_backbone.backbone = None # Not required after init --> free space
 
     base_ds = get_coco_api_from_dataset(dataset_val)
 
